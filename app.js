@@ -30,9 +30,9 @@ mongoose
   .connect(process.env.MONGO_URI)
   .then(async () => {
     console.log("MongoDB connected");
-    app.listen(process.env.PORT || 5000, () => {
-      console.log(`Server running on port ${process.env.PORT || 3000}`);
-    });
+    //app.listen(process.env.PORT || 5000, () => {
+    //  console.log(`Server running on port ${process.env.PORT || 3000}`);
+   // });
   })
   .catch((error) => {
     console.error("MongoDB connection error:", error);
@@ -69,3 +69,5 @@ mongoose
   app.get('/dashboard.html', authMiddleware,
     roleMiddleware(["teacher"]), (req, res) => {
   res.sendFile(path.join(__dirname, 'private', 'dashboard.html'));});
+
+  module.exports = app;

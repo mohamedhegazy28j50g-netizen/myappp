@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>الكورسات | منصة الأستاذ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared/style.css">
+<style>
+  /* ============ خاص بالصفحة دي بس ============ */
+  .wrap { max-width: 1120px; }
+
+  .doodle-sq-1 { width: 70px; height: 70px; top: 18%; left: 6%; }
+  .doodle-sq-2 { width: 46px; height: 46px; top: 62%; left: 12%; }
+  .doodle-sq-3 { width: 90px; height: 90px; bottom: 8%; right: 6%; }
+
+  .page-header {
+    position: relative;
+    z-index: 1;
+    padding: 56px 0 32px;
+    text-align: center;
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 7px 16px;
+    border-radius: 100px;
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-bottom: 20px;
+  }
+
+  .eyebrow-dot {
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+  }
+
+  .page-header h1 {
+    font-size: 38px;
+    font-weight: 800;
+    line-height: 1.3;
+    margin-bottom: 14px;
+  }
+
+  .page-header h1 span { color: var(--accent); }
+
+  .page-header p {
+    color: var(--text-dim);
+    font-size: 16px;
+    max-width: 520px;
+    margin: 0 auto;
+    line-height: 1.8;
+  }
+
+  @media (max-width: 560px) {
+    .page-header h1 { font-size: 28px; }
+  }
+
+  .filter-bar {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 44px;
+  }
+
+  main {
+    position: relative;
+    z-index: 1;
+    padding-bottom: 100px;
+  }
+
+  .classes-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+
+  @media (max-width: 980px) {
+    .classes-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 640px) {
+    .classes-grid { grid-template-columns: 1fr; }
+  }
+
+  .class-card {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  }
+
+  .class-card:hover {
+    transform: translateY(-6px);
+    border-color: color-mix(in srgb, var(--accent) 50%, var(--border));
+    box-shadow: 0 20px 45px -18px color-mix(in srgb, var(--accent) 45%, transparent);
+  }
+
+  .class-thumb {
+    aspect-ratio: 16/10;
+    position: relative;
+    background:
+      radial-gradient(circle at 30% 20%, color-mix(in srgb, var(--accent) 35%, transparent), transparent 60%),
+      var(--surface-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .class-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .class-thumb .thumb-fallback {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 22px;
+  }
+
+  .class-badge {
+    position: absolute;
+    top: 12px;
+    inset-inline-start: 12px;
+    background: color-mix(in srgb, var(--bg) 70%, transparent);
+    backdrop-filter: blur(6px);
+    border: 1px solid var(--border);
+    padding: 5px 12px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .class-body {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1;
+  }
+
+  .class-body h3 {
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.4;
+  }
+
+  .class-body p {
+    color: var(--text-dim);
+    font-size: 14px;
+    line-height: 1.8;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    flex: 1;
+  }
+
+  .class-meta {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 13px;
+    color: var(--text-dim);
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+    margin-top: 6px;
+  }
+
+  .class-meta span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .class-cta {
+    display: block;
+    text-align: center;
+    margin-top: 14px;
+    padding: 11px;
+    border-radius: 10px;
+    background: var(--surface-2);
+    color: var(--text);
+    font-weight: 700;
+    font-size: 14.5px;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+
+  .class-card:hover .class-cta {
+    background: var(--accent);
+    color: var(--accent-ink);
+  }
+</style>
+</head>
+<body>
+
+  <div class="bg-decor">
+    <div class="glow"></div>
+    <svg class="doodle doodle-sq-1" viewBox="0 0 70 70" fill="none"><rect x="4" y="4" width="62" height="62" rx="12" stroke-width="1.5" stroke-dasharray="5 5"/></svg>
+    <svg class="doodle doodle-sq-2" viewBox="0 0 46 46" fill="none"><rect x="3" y="3" width="40" height="40" rx="8" stroke-width="1.5"/></svg>
+    <svg class="doodle doodle-sq-3" viewBox="0 0 90 90" fill="none"><rect x="4" y="4" width="82" height="82" rx="16" stroke-width="1.5" stroke-dasharray="6 6"/></svg>
+  </div>
+
+  <nav>
+    <div class="brand">
+      <a href="home.html" class="brand-logo"><span class="logo-fy">fy</span><span class="logo-edu">Edu</span></a>
+    </div>
+
+    <div class="nav-links">
+      <a href="home.html" data-i18n="navHome">الرئيسية</a>
+      <a href="classes.html" class="active" data-i18n="navClasses">الكورسات</a>
+      <a href="about.html" data-i18n="navAbout">من أنا</a>
+      <a href="contact.html" data-i18n="navContact">تواصل</a>
+    </div>
+
+    <div class="nav-right">
+      <button class="icon-btn" id="langToggle" title="تغيير اللغة">EN</button>
+      <button class="icon-btn" id="themeToggle" title="تبديل الوضع">🌙</button>
+      <a href="auth.html" class="btn-cta" data-i18n="navCta">سجّل دخول</a>
+    </div>
+  </nav>
+
+  <div class="wrap">
+    <header class="page-header">
+      <div class="eyebrow">
+        <span class="eyebrow-dot"></span>
+        <span data-i18n="pageEyebrow">كل الكورسات في مكان واحد</span>
+      </div>
+      <h1>
+        <span data-i18n="pageTitleHighlight">اختار الكورس</span>
+        <span data-i18n="pageTitleRest">اللي يناسب مستواك</span>
+      </h1>
+      <p data-i18n="pageLede">
+        كل كورس متقسّم لدروس وحصص، تقدر تشتري الحصص اللي محتاجها بس من غير ما تدفع في اللي مش هيفيدك.
+      </p>
+    </header>
+
+    <div class="filter-bar" id="filterBar">
+      <button class="chip active" data-filter="all" data-i18n="filterAll">الكل</button>
+    </div>
+
+    <main>
+      <div class="classes-grid" id="classesGrid">
+        <!-- skeleton cards تتحط هنا لحد ما البيانات توصل -->
+      </div>
+    </main>
+  </div>
+
+  <script src="shared/app.js"></script>
+  <script>
+    /* ============ ترجمة الصفحة دي ============ */
+    const translations = {
+      ar: {
+        brandName: "اسم الأستاذ", navHome: "الرئيسية", navClasses: "الكورسات",
+        navAbout: "من أنا", navContact: "تواصل", navCta: "سجّل دخول",
+        pageEyebrow: "كل الكورسات في مكان واحد",
+        pageTitleHighlight: "اختار الكورس", pageTitleRest: "اللي يناسب مستواك",
+        pageLede: "كل كورس متقسّم لدروس وحصص، تقدر تشتري الحصص اللي محتاجها بس من غير ما تدفع في اللي مش هيفيدك.",
+        filterAll: "الكل",
+        ctaView: "استعرض الدروس", emptyTitle: "مفيش كورسات متاحة دلوقتي",
+        emptyBody: "تابعنا، هنضيف كورسات جديدة قريب.",
+      },
+      en: {
+        brandName: "Teacher Name", navHome: "Home", navClasses: "Courses",
+        navAbout: "About", navContact: "Contact", navCta: "Log In",
+        pageEyebrow: "All your courses in one place",
+        pageTitleHighlight: "Pick the course", pageTitleRest: "that fits your level",
+        pageLede: "Every course is split into lessons and sessions — buy only the sessions you need.",
+        filterAll: "All",
+        ctaView: "View Lessons", emptyTitle: "No courses available yet",
+        emptyBody: "Check back soon, new courses are coming.",
+      },
+    };
+
+    /* ============ جلب الكلاسات من الـ API ============ */
+    const grid = document.getElementById("classesGrid");
+    let allClasses = [];
+    let i18n; // بيتحدد تحت بعد ما نعرّف renderClasses
+
+    function skeletonCards(n = 6) {
+      grid.innerHTML = Array.from({ length: n }).map(() => `
+        <div class="class-card">
+          <div class="class-thumb skeleton"></div>
+          <div class="class-body">
+            <div class="skeleton" style="height:18px;width:70%;border-radius:6px;"></div>
+            <div class="skeleton" style="height:14px;width:100%;border-radius:6px;margin-top:6px;"></div>
+            <div class="skeleton" style="height:14px;width:60%;border-radius:6px;"></div>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function cardTemplate(cls) {
+      const lang = i18n.getLang();
+      const t = translations[lang];
+      const thumb = cls.thumbnail
+        ? `<img src="${cls.thumbnail}" alt="${cls.title}" loading="lazy" />`
+        : `<div class="thumb-fallback">${(cls.title || "?").trim().charAt(0)}</div>`;
+
+      return `
+        <div class="class-card">
+          <div class="class-thumb">
+            ${thumb}
+            ${cls.lessonsCount ? `<div class="class-badge">📚 <span>${cls.lessonsCount}</span></div>` : ""}
+          </div>
+          <div class="class-body">
+            <h3>${cls.title}</h3>
+            <p>${cls.description || ""}</p>
+            <div class="class-meta">
+              <span>
+    📖 ${cls.lessonsCount ?? 0}
+    ${lang === "ar" ? "درس" : "lessons"}
+  </span>
+
+  <span>
+    🎥 ${cls.sessionsCount ?? 0}
+    ${lang === "ar" ? "حصة" : "sessions"}
+  </span>
+            </div>
+            <a href="class.html?id=${cls._id}" class="class-cta">${t.ctaView}</a>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderClasses() {
+      if (!allClasses.length) return;
+      grid.innerHTML = allClasses.map(cardTemplate).join("");
+    }
+
+    function renderEmpty() {
+      const t = translations[i18n.getLang()];
+      grid.innerHTML = `
+        <div class="empty-state">
+          <div class="icon">📭</div>
+          <h3 style="color:var(--text);margin-bottom:8px;">${t.emptyTitle}</h3>
+          <p>${t.emptyBody}</p>
+        </div>
+      `;
+    }
+
+    async function loadClasses() {
+      skeletonCards();
+      try {
+        // المسار الحقيقي عندك: GET /classes (بيرجع { classes: [...] })
+        // الباك اند بيستخدم session cookie مش Bearer token، فـ credentials: "include" هي اللي بتبعت الكوكي
+        const res = await fetch("/classes", {
+          credentials: "include",
+        });
+        if (!res.ok) throw new Error("bad response");
+        const data = await res.json();
+        allClasses = data.classes || [];
+        if (!allClasses.length) return renderEmpty();
+        renderClasses();
+      } catch (err) {
+        // فولباك تجريبي عشان تعاين الشكل النهائي حتى من غير باك اند شغال دلوقتي
+        allClasses = [
+          { _id: "1", title: "الرياضيات — الصف الثالث الثانوي", description: "شرح كامل للمنهج مع تمارين وامتحانات دورية على كل باب.", thumbnail: "", lessonsCount: 24, sessionsCount: 96 },
+          { _id: "2", title: "الفيزياء — الصف الثاني الثانوي", description: "أساسيات الميكانيكا والكهرباء بطريقة مبسطة ومباشرة.", thumbnail: "", lessonsCount: 18, sessionsCount: 60 },
+          { _id: "3", title: "الكيمياء — الصف الأول الثانوي", description: "مقدمة شاملة في الكيمياء العضوية وغير العضوية.", thumbnail: "", lessonsCount: 14, sessionsCount: 42 },
+        ];
+        renderClasses();
+      }
+    }
+
+    i18n = initI18n(translations, () => renderClasses());
+    loadClasses();
+  </script>
+
+</body>
+</html>

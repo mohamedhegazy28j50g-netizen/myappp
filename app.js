@@ -1,0 +1,71 @@
+const express = require("express");
+const mongoose = require("mongoose");
+const dotenv = require("dotenv");
+const classRoutes = require("./routes/class");
+ const authRoutes = require("./routes/auth");
+const lessonRoutes = require("./routes/lesson");
+const sessionRoutes = require("./routes/session");
+const orderRoutes = require("./routes/order");
+const settingsRoutes = require("./routes/settings");
+const authMiddleware = require("./middleware/authMiddleware");
+const roleMiddleware = require("./middleware/roleMiddleware");
+const User = require("./models/User");
+const session = require("express-session");
+const MongoStore = require("connect-mongo").default;
+
+dotenv.config();
+
+const app = express();
+
+
+const path = require("path");
+
+app.use(express.json());
+app.use(express.static(path.join(__dirname, "public")));
+
+
+
+
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(async () => {
+    console.log("MongoDB connected");
+    app.listen(process.env.PORT || 5000, () => {
+      console.log(`Server running on port ${process.env.PORT || 3000}`);
+    });
+  })
+  .catch((error) => {
+    console.error("MongoDB connection error:", error);
+  });
+
+  app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGO_URI,
+      collectionName: "sessions",
+    }),
+
+    cookie: {
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+    },
+  })
+);
+
+ 
+  app.use("/classes", classRoutes);
+
+  app.use("/auth", authRoutes);
+  app.use("/", lessonRoutes);
+  app.use("/", sessionRoutes);
+  app.use("/", orderRoutes);
+  app.use("/", settingsRoutes);
+  app.get('/dashboard.html', authMiddleware,
+    roleMiddleware(["teacher"]), (req, res) => {
+  res.sendFile(path.join(__dirname, 'private', 'dashboard.html'));});

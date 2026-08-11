@@ -1,0 +1,554 @@
+/* =====================================================
+   style.css المشترك — منصة الأستاذ
+   بيتحمّل في كل الصفحات قبل الـ <style> الخاص بكل صفحة،
+   فأي قيمة يعيد تعريفها الملف الخاص بالصفحة (زي .wrap
+   max-width) بتكسب تلقائيًا بسبب ترتيب الـ cascade.
+   ===================================================== */
+
+:root {
+  --accent: #F5A623;
+  --accent-ink: #14161A;
+  --radius: 14px;
+
+  --bg: #FAFAF8;
+  --surface: #FFFFFF;
+  --surface-2: #F2F1ED;
+  --text: #14161A;
+  --text-dim: #666B75;
+  --border: #E7E6E1;
+
+  --free: #2FB170;
+  --live: #E14F4F;
+}
+
+html[data-theme="dark"] {
+  --bg: #0B0E1B;
+  --surface: #12162A;
+  --surface-2: #171B31;
+  --text: #F5F5F3;
+  --text-dim: #9096AC;
+  --border: #232842;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'IBM Plex Sans Arabic', sans-serif;
+  transition: background 0.25s ease, color 0.25s ease;
+  min-height: 100vh;
+  position: relative;
+}
+
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; }
+
+.wrap {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 28px;
+}
+
+/* =====================================================
+   الديكور الثابت في الخلفية
+   ===================================================== */
+.bg-decor {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.bg-decor .glow {
+  position: absolute;
+  top: -15%;
+  right: -8%;
+  width: min(560px, 70vw);
+  height: min(560px, 70vw);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--accent) 20%, transparent) 0%,
+    color-mix(in srgb, var(--accent) 10%, transparent) 35%,
+    color-mix(in srgb, var(--accent) 3%, transparent) 60%,
+    transparent 80%
+  );
+  filter: blur(10px);
+}
+
+html[data-theme="light"] .bg-decor .glow {
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--accent) 12%, transparent) 0%,
+    color-mix(in srgb, var(--accent) 6%, transparent) 35%,
+    color-mix(in srgb, var(--accent) 2%, transparent) 60%,
+    transparent 80%
+  );
+}
+
+@media (max-width: 640px) {
+  .bg-decor .glow {
+    width: 80vw;
+    height: 80vw;
+    top: -10%;
+    right: -20%;
+    opacity: 0.7;
+  }
+}
+
+.bg-decor svg.doodle {
+  position: absolute;
+  stroke: var(--text-dim);
+  opacity: 0.18;
+}
+
+@media (max-width: 820px) {
+  .bg-decor svg.doodle { display: none; }
+}
+
+/* =====================================================
+   NAV — شريط "كبسولة" عايم، بعيد عن حافة الشاشة، بحواف مدوّرة
+   ===================================================== */
+/* محدّدة بـ "body > nav" مش "nav" لوحدها — عشان القاعدة دي متعمولاش
+   عشان أي عنصر <nav> في الصفحة، هي مخصوصة للـ navbar الرئيسي بس
+   (اللي دايماً ابن مباشر لـ body). لو سبناها "nav" عامة، كانت
+   بتتطبّق كمان على nav.drawer-links (قائمة الحساب الجانبية، اللي
+   متداخلة جوه aside.user-drawer مش ابن مباشر لـ body)، وده كان بيدّيها
+   border-radius: 100px وbackground وbox-shadow من غير قصد — الشكل
+   البيضاوي اللي كان ظاهر ورا "طلباتي"/"حصصي" كان أساساً القائمة دي
+   بالكامل بحواف مدوّرة جداً بسبب القاعدة دي بالظبط. */
+body > nav {
+  position: sticky;
+  top: 16px;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 12px 10px 20px;
+  max-width: 1120px;
+  margin: 16px auto 0;
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.12);
+}
+
+html[data-theme="dark"] body > nav {
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.35);
+}
+
+@media (max-width: 640px) {
+  body > nav {
+    top: 10px;
+    margin: 10px auto 0;
+    padding: 8px 8px 8px 16px;
+    border-radius: 60px;
+  }
+}
+
+/* ============ لوجو Edufy (نص، من غير صورة/أيقونة شخص) ============ */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.brand-logo {
+  font-weight: 900;
+  font-size: 21px;
+  letter-spacing: -0.3px;
+  display: flex;
+  align-items: center;
+  gap: 1px;
+}
+
+.brand-logo .logo-edu { color: var(--text); }
+.brand-logo .logo-fy { color: var(--accent); }
+
+.brand-logo img { height: 26px; display: block; }
+
+.nav-links {
+  display: flex;
+  gap: 30px;
+  font-size: 15px;
+  color: var(--text-dim);
+  font-weight: 500;
+}
+
+.nav-links a.active { color: var(--accent); }
+.nav-links a:hover { color: var(--text); }
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.icon-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+.icon-btn:hover { color: var(--text); border-color: var(--text-dim); }
+
+.btn-cta {
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 700;
+  padding: 10px 22px;
+  border-radius: 100px;
+  font-size: 14.5px;
+  border: none;
+  cursor: pointer;
+  /* min-width عشان الزرار ميبقاش صغير أوي لو النص قصير (اسم من حرف
+     واحد مثلاً)، وmax-width + ellipsis عشان ميطلعش بره حدود الـ nav
+     لو النص طويل — الاتنين مع بعض بيدّوا عرض متسق في الحالتين */
+  min-width: 108px;
+  max-width: 220px;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .btn-cta { min-width: 84px; max-width: 130px; }
+}
+
+@media (max-width: 820px) {
+  .nav-links { display: none; }
+}
+
+/* =====================================================
+   BREADCRUMB + BACK BUTTON (صفحات التفاصيل)
+   ===================================================== */
+.breadcrumb {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 22px 0 0;
+  font-size: 13.5px;
+  color: var(--text-dim);
+}
+
+.breadcrumb a:hover { color: var(--accent); }
+.breadcrumb .sep { opacity: 0.5; }
+.breadcrumb .current { color: var(--text); font-weight: 600; }
+
+.back-btn {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 18px;
+  padding: 9px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.back-btn:hover { border-color: var(--text-dim); }
+
+/* =====================================================
+   CHIPS / FILTERS (مستخدمة في classes.html و lesson.html)
+   ===================================================== */
+.chip {
+  padding: 9px 18px;
+  border-radius: 100px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-dim);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.chip:hover { color: var(--text); border-color: var(--text-dim); }
+
+.chip.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+/* =====================================================
+   SKELETON LOADING + EMPTY STATE
+   ===================================================== */
+.skeleton { position: relative; overflow: hidden; background: var(--surface-2); }
+.skeleton::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--text) 8%, transparent), transparent);
+  animation: shimmer 1.4s infinite;
+}
+@keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+
+.empty-state {
+  text-align: center;
+  padding: 70px 20px;
+  color: var(--text-dim);
+}
+
+.empty-state .icon {
+  width: 60px; height: 60px;
+  margin: 0 auto 18px;
+  border-radius: 16px;
+  background: var(--surface-2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px;
+}
+
+/* =====================================================
+   USER DRAWER (القائمة الجانبية بعد تسجيل الدخول)
+   ===================================================== */
+.drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 90;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.drawer-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.user-drawer {
+  position: fixed;
+  top: 0;
+  inset-inline-end: 0;
+  height: 100%;
+  width: min(300px, 80vw);
+  background: var(--surface);
+  border-inline-start: 1px solid var(--border);
+  z-index: 91;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  transform: translateX(100%);
+  transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: -24px 0 60px rgba(0, 0, 0, 0.22);
+  overflow-y: auto;
+  border-radius: 25px;
+}
+
+html[dir="rtl"] .user-drawer { transform: translateX(-100%); }
+html[dir="rtl"] .user-drawer.open,
+html[dir="ltr"] .user-drawer.open { transform: translateX(0); }
+
+.drawer-close {
+  position: absolute;
+  top: 16px;
+  inset-inline-end: 16px;
+  z-index: 2;
+}
+
+.drawer-close svg { width: 16px; height: 16px; }
+
+/* ============ بطاقة المستخدم العلوية ============ */
+.drawer-card {
+  position: relative;
+  padding: 42px 24px 26px;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.drawer-card-glow {
+  position: absolute;
+  top: -90px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 32%, transparent) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.drawer-avatar {
+  position: relative;
+  z-index: 1;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 24px;
+  box-shadow: 0 12px 26px -6px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+.drawer-name {
+  position: relative;
+  z-index: 1;
+  font-size: 17px;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.drawer-tag {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  padding: 5px 13px;
+  border-radius: 100px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.drawer-tag-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+/* ============ روابط القائمة ============ */
+ .drawer-links {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 3px;
+  padding: 14px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.drawer-link {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 11px 14px;
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 12px;
+  color: var(--text);
+  font-size: 14.5px;
+  font-weight: 600;
+  transition: background 0.15s ease;
+}
+
+.drawer-link-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.drawer-link-icon svg { width: 18px; height: 18px; }
+
+.drawer-link-label { flex: 1; }
+
+.drawer-link-chevron {
+  color: var(--text-dim);
+  font-size: 17px;
+  transition: color 0.15s ease;
+}
+
+html[dir="rtl"] .drawer-link-chevron { display: inline-block; transform: scaleX(-1); }
+
+/* تأثيرات الـ hover بس على الأجهزة اللي فيها فأر حقيقي (pointer:fine).
+   من غير الشرط ده، المتصفحات اللمسية (موبايل) بتـ"علّق" حالة الـ hover
+   على العنصر اللي اتدوس عليه لحد ما المستخدم يدوس مكان تاني — ولأن
+   المسافة بين صفوف القائمة صغيرة جداً (gap: 3px)، الخلفيات الفاتحة
+   بتاعة أكتر من صف بتتلاصق بصرياً وتبان كشكل بيضاوي واحد متصل. */
+@media (hover: hover) and (pointer: fine) {
+  .drawer-link:hover { background: var(--surface-2); }
+
+  .drawer-link:hover .drawer-link-icon {
+    background: color-mix(in srgb, var(--accent) 16%, transparent);
+    color: var(--accent);
+  }
+
+  .drawer-link:hover .drawer-link-chevron { color: var(--accent); }
+}
+
+/* ============ زرار الخروج ============ */
+.drawer-logout {
+  margin: auto 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  border-radius: 12px;
+  padding: 13px;
+  font-size: 14.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.drawer-logout svg { width: 17px; height: 17px; flex-shrink: 0; }
+
+.drawer-logout:hover {
+  border-color: color-mix(in srgb, var(--live) 55%, var(--border));
+  background: color-mix(in srgb, var(--live) 10%, var(--surface-2));
+  color: var(--live);
+}
+
+/* الزرار (سجّل دخول / مرحباً) مخفي لحد ما نعرف حالة تسجيل
+   الدخول، عشان منعرضش زرار غلط لحظة ثم نبدّله (flash) */
+.nav-right .btn-cta {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.nav-right .btn-cta.auth-ready {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}

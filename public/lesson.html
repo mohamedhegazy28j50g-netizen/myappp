@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>تفاصيل الدرس | منصة الأستاذ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared/style.css">
+<style>
+  /* ============ خاص بالصفحة دي بس ============ */
+  .wrap { max-width: 980px; }
+
+  /* ============ LESSON HEADER ============ */
+  .lesson-header {
+    position: relative; z-index: 1;
+    padding: 26px 0 30px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 26px;
+  }
+
+  .lesson-header .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 13px; color: var(--text-dim); margin-bottom: 10px;
+  }
+
+  .lesson-header h1 { font-size: 26px; font-weight: 800; margin-bottom: 10px; }
+
+  .lesson-progress-row {
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    font-size: 13.5px; color: var(--text-dim); margin-top: 6px;
+  }
+  .lesson-progress-row span { display: flex; align-items: center; gap: 6px; }
+
+  /* ============ FILTER CHIPS ============ */
+  .type-filter {
+    position: relative; z-index: 1;
+    display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;
+  }
+
+  /* ============ SESSIONS LIST ============ */
+  .sessions-list {
+    position: relative; z-index: 1;
+    display: flex; flex-direction: column; gap: 12px;
+    padding-bottom: 100px;
+  }
+
+  .session-card {
+    display: flex; align-items: center; gap: 16px;
+    padding: 16px 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .session-card:hover {
+    border-color: color-mix(in srgb, var(--accent) 50%, var(--border));
+    box-shadow: 0 10px 30px -18px color-mix(in srgb, var(--accent) 55%, transparent);
+  }
+
+  .session-order {
+    width: 38px; height: 38px; flex-shrink: 0; border-radius: 10px;
+    background: var(--surface-2); color: var(--text-dim);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 14px;
+  }
+
+  .session-icon {
+    width: 44px; height: 44px; flex-shrink: 0; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center; font-size: 19px;
+  }
+  .session-icon.recorded { background: color-mix(in srgb, var(--accent) 16%, transparent); }
+  .session-icon.live { background: color-mix(in srgb, var(--live) 16%, transparent); }
+
+  .session-info { flex: 1; min-width: 0; }
+  .session-info h4 { font-size: 15.5px; font-weight: 700; margin-bottom: 5px; }
+
+  .session-desc {
+    font-size: 12.5px;
+    color: var(--text-dim);
+    line-height: 1.7;
+    margin-bottom: 8px;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .session-tags { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+  .tag {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px; border-radius: 100px;
+    font-size: 12px; font-weight: 600;
+  }
+  .tag.type-recorded { background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); }
+  .tag.type-live { background: color-mix(in srgb, var(--live) 14%, transparent); color: var(--live); }
+  .tag.free { background: color-mix(in srgb, var(--free) 16%, transparent); color: var(--free); }
+  .tag.paid { background: var(--surface-2); color: var(--text-dim); }
+  .tag.duration { background: var(--surface-2); color: var(--text-dim); }
+
+  .session-cta {
+    flex-shrink: 0;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: center;
+    white-space: nowrap;
+    transition: filter 0.15s ease;
+  }
+  .session-cta.free-cta { background: var(--surface-2); color: var(--text); }
+  .session-cta.paid-cta { background: var(--accent); color: var(--accent-ink); }
+  .session-cta:hover { filter: brightness(1.06); }
+
+  @media (max-width: 560px) {
+    .session-card { flex-wrap: wrap; }
+    .session-cta { width: 100%; order: 3; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="bg-decor"><div class="glow"></div></div>
+
+  <nav>
+    <div class="brand">
+      <a href="home.html" class="brand-logo"><span class="logo-fy">fy</span><span class="logo-edu">Edu</span></a>
+    </div>
+
+    <div class="nav-links">
+      <a href="home.html" data-i18n="navHome">الرئيسية</a>
+      <a href="classes.html" class="active" data-i18n="navClasses">الكورسات</a>
+      <a href="about.html" data-i18n="navAbout">من أنا</a>
+      <a href="contact.html" data-i18n="navContact">تواصل</a>
+    </div>
+    <div class="nav-right">
+      <button class="icon-btn" id="langToggle" title="تغيير اللغة">EN</button>
+      <button class="icon-btn" id="themeToggle" title="تبديل الوضع">🌙</button>
+      <a href="auth.html" class="btn-cta" data-i18n="navCta">سجّل دخول</a>
+    </div>
+  </nav>
+
+  <div class="wrap">
+
+    <div class="breadcrumb" id="breadcrumb">
+      <a href="home.html" data-i18n="crumbHome">الرئيسية</a>
+      <span class="sep">/</span>
+      <a href="classes.html" data-i18n="crumbClasses">الكورسات</a>
+      <span class="sep">/</span>
+      <a href="#" id="crumbClass">...</a>
+      <span class="sep">/</span>
+      <span class="current" id="crumbLesson">...</span>
+    </div>
+
+    <button class="back-btn" id="backBtn">
+      <span>→</span>
+      <span data-i18n="backToLessons">رجوع لدروس الكورس</span>
+    </button>
+
+    <header class="lesson-header">
+      <div class="eyebrow" id="lessonEyebrow">
+        <span data-i18n="lessonEyebrow">درس رقم</span> <span id="lessonOrder">—</span>
+      </div>
+      <h1 id="lessonTitle" class="skeleton" style="display:inline-block;min-width:220px;height:30px;border-radius:6px;">&nbsp;</h1>
+      <div class="lesson-progress-row">
+        <span id="sessionsMeta">📚 —</span>
+        <span id="freeMeta"></span>
+      </div>
+    </header>
+
+    <div class="type-filter" id="typeFilter">
+      <button class="chip active" data-type="all" data-i18n="filterAll">كل الحصص</button>
+      <button class="chip" data-type="recorded" data-i18n="filterRecorded">مسجّلة</button>
+      <button class="chip" data-type="live" data-i18n="filterLive">لايف</button>
+    </div>
+
+    <div class="sessions-list" id="sessionsList">
+      <!-- سكيلتون / كروت الحصص -->
+    </div>
+
+  </div>
+
+  <script src="shared/app.js"></script>
+  <script>
+    /* ============ ترجمة الصفحة دي ============ */
+    const translations = {
+      ar: {
+        brandName: "اسم الأستاذ", navCta: "سجّل دخول",
+        crumbHome: "الرئيسية", crumbClasses: "الكورسات",
+        backToLessons: "رجوع لدروس الكورس",
+        lessonEyebrow: "درس رقم",
+        filterAll: "كل الحصص", filterRecorded: "مسجّلة", filterLive: "لايف",
+        recorded: "مسجّلة", live: "لايف",
+        free: "مجانية", paid: "مدفوعة",
+        watchFree: "شاهد مجانًا",
+        buyFor: (p) => `اشترِ بـ ${p} ج.م`,
+        openSession: "افتح الحصة",
+        durationDays: (d) => `⏳ الوصول ${d} يوم`,
+        sessionsCount: (n) => `📚 ${n} حصة`,
+        freeCount: (n) => (n > 0 ? `🎁 ${n} حصة مجانية` : ""),
+        emptyTitle: "مفيش حصص من النوع ده",
+        emptyBody: "جرّب فلتر تاني.",
+        emptyLessonTitle: "الدرس ده لسه من غير حصص",
+        loadErrorTitle: "معرفناش نجيب البيانات",
+        loadErrorBody: "تأكد إنك مسجّل دخول وإن السيرفر شغال، وحاول تاني.",
+      },
+      en: {
+        brandName: "Teacher Name", navCta: "Log In",
+        crumbHome: "Home", crumbClasses: "Courses",
+        backToLessons: "Back to lessons",
+        lessonEyebrow: "Lesson",
+        filterAll: "All sessions", filterRecorded: "Recorded", filterLive: "Live",
+        recorded: "Recorded", live: "Live",
+        free: "Free", paid: "Paid",
+        watchFree: "Watch free",
+        buyFor: (p) => `Buy for ${p} EGP`,
+        openSession: "Open session",
+        durationDays: (d) => `⏳ ${d}-day access`,
+        sessionsCount: (n) => `📚 ${n} sessions`,
+        freeCount: (n) => (n > 0 ? `🎁 ${n} free` : ""),
+        emptyTitle: "No sessions of this type",
+        emptyBody: "Try a different filter.",
+        emptyLessonTitle: "This lesson has no sessions yet",
+        loadErrorTitle: "Couldn't load data",
+        loadErrorBody: "Make sure you're logged in and the server is running, then try again.",
+      },
+    };
+
+    /* ============ قراءة id الدرس من الرابط ============
+       (زي صفحة الكلاس بالظبط: من غير redirect فوري عشان
+       مايحصلش 404 جوا معاينة كلود — في مشروعك الحقيقي ممكن
+       ترجع الـ redirect لصفحة classes.html) */
+    const params = new URLSearchParams(location.search);
+    const lessonId = params.get("id") || "demo";
+
+    let allSessions = [];
+    let currentFilter = "all";
+    let classId = null;
+    let i18n;
+
+    // initI18n بتنده الـ callback بتاعتها *قبل* ما ترجع وتتحط في i18n،
+    // فوقت أول نداء للـ callback يبقى i18n لسه undefined. الدالة دي
+    // بتتفادى المشكلة دي بقراءة اللغة من localStorage كـ fallback.
+    function getLang() {
+      if (i18n && typeof i18n.getLang === "function") return i18n.getLang();
+      return localStorage.getItem("lang") || "ar";
+    }
+
+    /* ============ جلب بيانات الدرس ============ */
+    async function loadLesson() {
+      try {
+        const res = await fetch(`/lessons/${lessonId}`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token") || ""}` },
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        paintLessonHeader(data.lesson);
+      } catch (err) {
+        console.error("Failed to load lesson:", err);
+        renderLessonHeaderError();
+      }
+    }
+
+    function renderLessonHeaderError() {
+      const t = translations[getLang()];
+      const titleEl = document.getElementById("lessonTitle");
+      titleEl.classList.remove("skeleton");
+      titleEl.style.cssText = "";
+      titleEl.textContent = t.loadErrorTitle;
+      document.getElementById("sessionsMeta").textContent = "";
+      renderSessionsError();
+    }
+
+    async function loadClassName(id) {
+      try {
+        const res = await fetch(`/classes/${id}`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token") || ""}` },
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        document.getElementById("crumbClass").textContent = data.class.title;
+      } catch (err) {
+        console.error("Failed to load class name:", err);
+      }
+    }
+
+    function paintLessonHeader(lesson) {
+      classId = lesson.classId || "demo";
+
+      document.getElementById("crumbLesson").textContent = lesson.title;
+      document.title = `${lesson.title} | منصة الأستاذ`;
+      document.getElementById("lessonOrder").textContent = lesson.order ?? "—";
+
+      const titleEl = document.getElementById("lessonTitle");
+      titleEl.classList.remove("skeleton");
+      titleEl.style.cssText = "";
+      titleEl.textContent = lesson.title;
+
+      document.getElementById("crumbClass").href = `class.html?id=${classId}`;
+      document.getElementById("backBtn").onclick = () => { location.href = `class.html?id=${classId}`; };
+
+      loadClassName(classId);
+    }
+
+    /* ============ جلب الحصص من الباك اند ============ */
+    async function loadSessions() {
+      try {
+        const res = await fetch(`/lessons/${lessonId}/sessions`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token") || ""}` },
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        allSessions = data.sessions || [];
+        renderMeta();
+        renderSessions(currentFilter);
+      } catch (err) {
+        console.error("Failed to load sessions:", err);
+        renderSessionsError();
+      }
+    }
+
+    function renderSessionsError() {
+      const t = translations[getLang()];
+      document.getElementById("sessionsList").innerHTML = `
+        <div class="empty-state">
+          <div class="icon">⚠️</div>
+          <h3 style="color:var(--text);margin-bottom:8px;">${t.loadErrorTitle}</h3>
+          <p>${t.loadErrorBody}</p>
+        </div>`;
+    }
+
+    function renderMeta() {
+      const t = translations[getLang()];
+      document.getElementById("sessionsMeta").textContent = t.sessionsCount(allSessions.length);
+      const freeCount = allSessions.filter((s) => s.accessType === "free").length;
+      document.getElementById("freeMeta").textContent = t.freeCount(freeCount);
+    }
+
+    function filterSessions(type) {
+      if (type === "all") return allSessions;
+      return allSessions.filter((s) => s.type === type);
+    }
+
+    function sessionCardTemplate(s) {
+      const t = translations[getLang()];
+      const isFree = s.accessType === "free";
+      const icon = s.type === "live" ? "🔴" : "🎥";
+
+      return `
+        <a class="session-card" href="session.html?id=${s._id}">
+          <div class="session-order">${s.order}</div>
+          <div class="session-icon ${s.type}">${icon}</div>
+          <div class="session-info">
+            <h4>${s.title}</h4>
+            ${s.description ? `<p class="session-desc">${s.description}</p>` : ""}
+            <div class="session-tags">
+              <span class="tag type-${s.type}">${s.type === "live" ? t.live : t.recorded}</span>
+              <span class="tag ${isFree ? "free" : "paid"}">${isFree ? t.free : (getLang() === "ar" ? `${s.price} ج.م` : `${s.price} EGP`)}</span>
+              ${(!isFree && s.accessDurationDays) ? `<span class="tag duration">${t.durationDays(s.accessDurationDays)}</span>` : ""}
+            </div>
+          </div>
+          <div class="session-cta ${isFree ? "free-cta" : "paid-cta"}">
+            ${isFree ? t.watchFree : t.buyFor(s.price)}
+          </div>
+        </a>
+      `;
+    }
+
+    function renderSessions(filterType) {
+      const list = document.getElementById("sessionsList");
+      const t = translations[getLang()];
+
+      if (!allSessions.length) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <div class="icon">📭</div>
+            <h3 style="color:var(--text);margin-bottom:8px;">${t.emptyLessonTitle}</h3>
+          </div>`;
+        return;
+      }
+
+      const filtered = filterSessions(filterType);
+
+      if (!filtered.length) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <div class="icon">🎬</div>
+            <h3 style="color:var(--text);margin-bottom:8px;">${t.emptyTitle}</h3>
+            <p>${t.emptyBody}</p>
+          </div>`;
+        return;
+      }
+
+      list.innerHTML = filtered.map(sessionCardTemplate).join("");
+    }
+
+    function skeletonCards(n = 4) {
+      const list = document.getElementById("sessionsList");
+      list.innerHTML = Array.from({ length: n }).map(() => `
+        <div class="session-card">
+          <div class="skeleton" style="width:38px;height:38px;border-radius:10px;"></div>
+          <div class="skeleton" style="width:44px;height:44px;border-radius:12px;"></div>
+          <div style="flex:1;">
+            <div class="skeleton" style="height:15px;width:45%;border-radius:6px;margin-bottom:8px;"></div>
+            <div class="skeleton" style="height:12px;width:30%;border-radius:6px;"></div>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    /* ============ فلتر النوع ============ */
+    document.getElementById("typeFilter").addEventListener("click", (e) => {
+      const btn = e.target.closest(".chip");
+      if (!btn) return;
+      document.querySelectorAll("#typeFilter .chip").forEach((c) => c.classList.remove("active"));
+      btn.classList.add("active");
+      currentFilter = btn.dataset.type;
+      renderSessions(currentFilter);
+    });
+
+    i18n = initI18n(translations, () => {
+      renderMeta();
+      renderSessions(currentFilter);
+    });
+
+    skeletonCards();
+    loadLesson();
+    loadSessions();
+  </script>
+
+</body>
+</html>

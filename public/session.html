@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>تفاصيل الحصة | منصة الأستاذ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared/style.css">
+<style>
+  /* ============ خاص بالصفحة دي بس ============ */
+  .wrap { max-width: 1160px; }
+  nav { max-width: 1160px; }
+
+  .breadcrumb { padding: 20px 0 0; font-size: 13px; }
+  .back-btn { margin-top: 16px; }
+
+  /* ============ LAYOUT ============ */
+  .session-layout {
+    position: relative; z-index: 1;
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    grid-template-areas: "player playlist" "attachments playlist";
+    gap: 26px;
+    margin-top: 22px;
+    padding-bottom: 100px;
+    align-items: start;
+    transition: grid-template-columns 0.25s ease;
+  }
+
+  /* لما القايمة تتقفل، الفيديو ياخد العرض كله */
+  .session-layout.playlist-collapsed {
+    grid-template-columns: 1fr;
+    grid-template-areas: "player" "attachments";
+  }
+
+  @media (max-width: 940px) {
+    /* على الموبايل: الفيديو الأول، بعده قايمة الفيديوهات، وأخيرًا المرفقات */
+    .session-layout,
+    .session-layout.playlist-collapsed {
+      grid-template-columns: 1fr;
+      grid-template-areas: "player" "playlist" "attachments";
+    }
+  }
+
+  .player-block { grid-area: player; display: flex; flex-direction: column; gap: 18px; }
+  .playlist-area { grid-area: playlist; }
+  .attachments-area { grid-area: attachments; }
+
+  .session-layout.playlist-collapsed .playlist-area { display: none; }
+  @media (max-width: 940px) {
+    /* على الموبايل مفيش مساحة نضيّعها، فزرار الإخفاء بيبقى غير متاح */
+    .ctrl-btn#togglePlaylistBtn { display: none; }
+  }
+
+  /* ============ PLAYER ============ */
+  .player-col { display: flex; flex-direction: column; gap: 18px; }
+
+  .player-shell {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16/9;
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: #000;
+    border: 1px solid var(--border);
+    transform: scale(0.985);
+    opacity: 0;
+    transition: transform 0.35s cubic-bezier(.2,.8,.2,1), opacity 0.35s ease;
+  }
+
+  .player-shell.ready { transform: scale(1); opacity: 1; }
+
+  .player-shell:fullscreen,
+  .player-shell:-webkit-full-screen {
+    aspect-ratio: unset;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  .player-shell iframe, .player-shell video {
+    width: 100%; height: 100%; border: 0; display: block;
+  }
+
+  .player-wrap { position: relative; }
+
+  .player-controls {
+    position: absolute;
+    top: 12px;
+    inset-inline-end: 12px;
+    z-index: 6;
+    display: flex;
+    gap: 8px;
+  }
+
+  .ctrl-btn {
+    width: 36px; height: 36px;
+    border-radius: 9px;
+    border: none;
+    background: rgba(11,14,27,0.6);
+    backdrop-filter: blur(6px);
+    color: #fff;
+    font-size: 15px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  .ctrl-btn:hover { background: rgba(11,14,27,0.85); }
+  .ctrl-btn.active { background: var(--accent); color: var(--accent-ink); }
+
+  /* لما القايمة مقفولة، بنورّي زرار صغير عايم عشان يرجّعها */
+  .reopen-playlist-btn {
+    display: none;
+    align-items: center; gap: 8px;
+    padding: 9px 16px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 13.5px; font-weight: 600;
+    cursor: pointer;
+    margin-top: 4px;
+  }
+  .session-layout.playlist-collapsed .reopen-playlist-btn { display: inline-flex; }
+
+  .player-locked, .player-live, .player-loading, .player-error {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 14px; text-align: center; padding: 24px;
+    color: #fff;
+    background:
+      radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 65%),
+      #0B0E1B;
+  }
+
+  .player-locked .lock-icon, .player-live .live-icon, .player-error .error-icon {
+    width: 56px; height: 56px; border-radius: 16px;
+    background: color-mix(in srgb, var(--accent) 90%, transparent);
+    color: var(--accent-ink);
+    display: flex; align-items: center; justify-content: center; font-size: 24px;
+  }
+
+  .player-error .error-icon { background: color-mix(in srgb, var(--live) 85%, transparent); color: #fff; }
+
+  .player-locked h3, .player-live h3, .player-error h3 { font-size: 18px; font-weight: 700; }
+  .player-locked p, .player-live p, .player-error p { font-size: 13.5px; color: #C9CCDA; max-width: 340px; line-height: 1.8; }
+
+  .unlock-btn {
+    margin-top: 6px; padding: 12px 26px; border-radius: 10px;
+    background: var(--accent); color: var(--accent-ink);
+    font-weight: 700; font-size: 14.5px; border: none; cursor: pointer;
+  }
+
+  .current-video-title { font-size: 19px; font-weight: 700; }
+  .current-video-meta { font-size: 13px; color: var(--text-dim); margin-top: 4px; }
+
+  /* ============ PLAYLIST ============ */
+  .playlist {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .playlist-head {
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--border);
+    font-weight: 700;
+    font-size: 14.5px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+
+  .playlist-head span.count { color: var(--text-dim); font-weight: 500; font-size: 13px; }
+
+  .playlist-items { max-height: 460px; overflow-y: auto; }
+
+  .playlist-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 13px 18px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s ease;
+  }
+
+  .playlist-item:last-child { border-bottom: none; }
+  .playlist-item:hover { background: var(--surface-2); }
+
+  .playlist-item.active {
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+  }
+
+  .playlist-item .idx {
+    width: 30px; height: 30px; flex-shrink: 0; border-radius: 8px;
+    background: var(--surface-2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; color: var(--text-dim);
+  }
+
+  .playlist-item.active .idx { background: var(--accent); color: var(--accent-ink); }
+
+  .playlist-item .p-title {
+    flex: 1; font-size: 13.5px; font-weight: 600;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+
+  .playlist-item .play-mark { font-size: 12px; color: var(--text-dim); flex-shrink: 0; }
+  .playlist-item.active .play-mark { color: var(--accent); }
+
+  /* ============ ATTACHMENTS ============ */
+  .attachments {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+
+  .attachments h3 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+
+  .attachment-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface-2);
+  }
+
+  .attachment-row .a-icon {
+    width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 17px;
+    background: color-mix(in srgb, var(--accent) 16%, transparent);
+  }
+
+  .attachment-row .a-info { flex: 1; min-width: 0; }
+  .attachment-row .a-info strong { display: block; font-size: 13.5px; font-weight: 700; }
+  .attachment-row .a-info span { font-size: 12px; color: var(--text-dim); }
+
+  .attachment-row .a-btn {
+    flex-shrink: 0; padding: 8px 14px; border-radius: 8px;
+    background: var(--surface); border: 1px solid var(--border);
+    font-size: 12.5px; font-weight: 700;
+  }
+  .attachment-row .a-btn:hover { border-color: var(--text-dim); }
+
+  .homework-desc {
+    font-size: 13.5px; color: var(--text-dim); line-height: 1.9;
+  }
+
+  /* ============ مودال الشراء (تحويل يدوي) ============ */
+  .purchase-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 200;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .purchase-overlay.show { display: flex; }
+
+  .purchase-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 26px;
+    width: min(440px, 100%);
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.35);
+  }
+
+  .purchase-card h3 { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+  .purchase-card > p.purchase-sub { color: var(--text-dim); font-size: 13.5px; margin-bottom: 18px; line-height: 1.8; }
+
+  .purchase-transfer-box {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+
+  .purchase-transfer-box .amount { font-size: 22px; font-weight: 800; color: var(--accent); margin-bottom: 6px; }
+  .purchase-transfer-box .number {
+    direction: ltr;
+    display: inline-block;
+    font-size: 19px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    margin-top: 4px;
+  }
+  .purchase-transfer-box .hint-sm { color: var(--text-dim); font-size: 12px; margin-top: 4px; }
+
+  .whatsapp-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    background: #25D366;
+    color: #08210f;
+    border: 0;
+    border-radius: 10px;
+    padding: 12px;
+    font-weight: 800;
+    font-size: 14.5px;
+    margin-bottom: 18px;
+  }
+
+  .purchase-form { display: flex; flex-direction: column; gap: 12px; }
+  .purchase-form label { font-size: 13px; font-weight: 700; display: block; margin-bottom: 6px; }
+  .purchase-form input {
+    width: 100%;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+    border-radius: 10px;
+    padding: 11px 13px;
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+  }
+  .purchase-form input:focus { border-color: var(--accent); }
+
+  .purchase-actions { display: flex; gap: 10px; margin-top: 6px; }
+  .purchase-actions button { flex: 1; padding: 12px; border-radius: 10px; font-weight: 700; font-size: 14px; cursor: pointer; }
+  .purchase-cancel-btn { border: 1px solid var(--border); background: transparent; color: var(--text); }
+  .purchase-confirm-btn { border: 0; background: var(--accent); color: var(--accent-ink); }
+  .purchase-confirm-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  .purchase-msg { font-size: 13px; border-radius: 10px; padding: 10px 12px; margin-top: 4px; display: none; line-height: 1.8; }
+  .purchase-msg.show { display: block; }
+  .purchase-msg.error { background: color-mix(in srgb, #e14f4f 10%, var(--surface)); border: 1px solid color-mix(in srgb, #e14f4f 35%, var(--border)); }
+  .purchase-msg.success { background: color-mix(in srgb, var(--free) 12%, var(--surface)); border: 1px solid color-mix(in srgb, var(--free) 35%, var(--border)); }
+
+  .purchase-success-state { text-align: center; padding: 10px 0; }
+  .purchase-success-state .big-icon { font-size: 40px; margin-bottom: 10px; }
+  .purchase-success-state h4 { font-size: 16px; font-weight: 800; margin-bottom: 8px; }
+  .purchase-success-state p { color: var(--text-dim); font-size: 13.5px; line-height: 1.9; margin-bottom: 16px; }
+</style>
+</head>
+<body>
+
+  <div class="bg-decor"><div class="glow"></div></div>
+
+  <nav>
+    <div class="brand">
+      <a href="home.html" class="brand-logo"><span class="logo-fy">fy</span><span class="logo-edu">Edu</span></a>
+    </div>
+
+    <div class="nav-links">
+      <a href="home.html" data-i18n="navHome">الرئيسية</a>
+      <a href="classes.html" class="active" data-i18n="navClasses">الكورسات</a>
+      <a href="about.html" data-i18n="navAbout">من أنا</a>
+      <a href="contact.html" data-i18n="navContact">تواصل</a>
+    </div>
+    <div class="nav-right">
+      <button class="icon-btn" id="langToggle" title="تغيير اللغة">EN</button>
+      <button class="icon-btn" id="themeToggle" title="تبديل الوضع">🌙</button>
+      <a href="home.html" class="btn-cta" data-i18n="navCta">سجّل دخول</a>
+    </div>
+  </nav>
+
+  <div class="wrap">
+
+    <div class="breadcrumb" id="breadcrumb">
+      <a href="home.html" data-i18n="crumbHome">الرئيسية</a>
+      <span class="sep">/</span>
+      <a href="classes.html" data-i18n="crumbClasses">الكورسات</a>
+      <span class="sep">/</span>
+      <a href="#" id="crumbClass">...</a>
+      <span class="sep">/</span>
+      <a href="#" id="crumbLesson">...</a>
+      <span class="sep">/</span>
+      <span class="current" id="crumbSession">...</span>
+    </div>
+
+    <button class="back-btn" id="backBtn">
+      <span>→</span>
+      <span data-i18n="backToSessions">رجوع لحصص الدرس</span>
+    </button>
+
+    <div class="session-layout" id="sessionLayout">
+      <div class="player-block">
+        <div class="player-wrap">
+          <div class="player-shell" id="playerShell">
+            <div class="player-loading" id="playerLoading">
+              <div class="skeleton" style="position:absolute;inset:0;"></div>
+            </div>
+          </div>
+          <div class="player-controls" id="playerControls" style="display:none;">
+            <button class="ctrl-btn" id="togglePlaylistBtn" title="إخفاء/إظهار قايمة الفيديوهات" data-i18n-title="togglePlaylist">☰</button>
+            <button class="ctrl-btn" id="fullscreenBtn" title="ملء الشاشة" data-i18n-title="fullscreen">⛶</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="current-video-title" id="currentVideoTitle">—</div>
+          <div class="current-video-meta" id="currentVideoMeta"></div>
+          <button class="reopen-playlist-btn" id="reopenPlaylistBtn">
+            <span>☰</span>
+            <span data-i18n="showPlaylist">إظهار قايمة الفيديوهات</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="playlist-area" id="playlistArea">
+        <div class="playlist" id="playlistBox">
+          <div class="playlist-head">
+            <span data-i18n="playlistTitle">فيديوهات الحصة</span>
+            <span class="count" id="playlistCount"></span>
+          </div>
+          <div class="playlist-items" id="playlistItems"></div>
+        </div>
+      </div>
+
+      <div class="attachments-area">
+        <div class="attachments" id="attachmentsBox" style="display:none;">
+          <h3 data-i18n="attachmentsTitle">مرفقات الحصة</h3>
+          <div id="attachmentsList"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============ مودال الشراء (تحويل يدوي + واتساب) ============ -->
+  <div class="purchase-overlay" id="purchaseOverlay">
+    <div class="purchase-card">
+      <div id="purchaseFormState">
+        <h3 data-i18n="purchaseTitle">اشترِ الوصول للحصة</h3>
+        <p class="purchase-sub" data-i18n="purchaseSub">حوّل المبلغ، ابعت السكرين شوت على واتساب، واملأ بياناتك — هيتفعّل الوصول بعد ما نتأكد من التحويل.</p>
+
+        <div class="purchase-transfer-box">
+          <div class="amount" id="purchaseAmount"></div>
+          <div data-i18n="transferTo">حوّل على الرقم (فودافون كاش / إنستاباي):</div>
+          <div class="number">01119103460</div>
+          <div class="hint-sm" data-i18n="transferHint">تأكد من المبلغ قبل التحويل</div>
+        </div>
+
+        <a class="whatsapp-btn" id="whatsappBtn" target="_blank" rel="noopener">
+          📱 <span data-i18n="whatsappBtnText">ابعت سكرين شوت التحويل على واتساب</span>
+        </a>
+
+        <form class="purchase-form" id="purchaseForm">
+          <div>
+            <label for="purchaseName" data-i18n="fullNameLabel">الاسم الثلاثي</label>
+            <input type="text" id="purchaseName" required autocomplete="name" />
+          </div>
+          <div>
+            <label for="purchasePhone" data-i18n="phoneLabel">رقم تليفون للتواصل</label>
+            <input type="tel" id="purchasePhone" required autocomplete="tel" dir="ltr" />
+          </div>
+
+          <div class="purchase-msg" id="purchaseMsg"></div>
+
+          <div class="purchase-actions">
+            <button type="button" class="purchase-cancel-btn" id="purchaseCancelBtn" data-i18n="cancelBtn">إلغاء</button>
+            <button type="submit" class="purchase-confirm-btn" id="purchaseSubmitBtn" data-i18n="confirmTransferBtn">تأكيد إني حوّلت</button>
+          </div>
+        </form>
+      </div>
+
+      <div id="purchaseSuccessState" class="purchase-success-state" style="display:none;">
+        <div class="big-icon">⏳</div>
+        <h4 data-i18n="pendingTitle">طلبك بقى قيد المراجعة</h4>
+        <p data-i18n="pendingBody">هنراجع التحويل ونفعّل الوصول للحصة بأقرب وقت. تقدر تتابع حالة الطلب من صفحة "طلباتي".</p>
+        <div class="purchase-actions">
+          <button type="button" class="purchase-confirm-btn" id="purchaseCloseBtn" data-i18n="closeBtn" style="flex:1;">تمام</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="shared/app.js"></script>
+  <script>
+    /* ============ ترجمة الصفحة دي ============ */
+    const translations = {
+      ar: {
+        brandName: "اسم الأستاذ", navCta: "سجّل دخول",
+        crumbHome: "الرئيسية", crumbClasses: "الكورسات",
+        backToSessions: "رجوع لحصص الدرس",
+        playlistTitle: "فيديوهات الحصة",
+        attachmentsTitle: "مرفقات الحصة",
+        pdfLabel: "ملف PDF", pdfSub: "مذكرة أو ملخص الحصة",
+        assignmentLabel: "الواجب", assignmentSub: "حل واجب الحصة",
+        openBtn: "فتح", downloadBtn: "تحميل",
+        lockedTitle: "الحصة دي مقفولة",
+        lockedBody: (p) => `اشترِ الوصول بـ ${p} ج.م عشان تفتح الفيديوهات والمرفقات كلها.`,
+        unlockBtn: (p) => `اشترِ الآن — ${p} ج.م`,
+        liveTitle: "الحصة دي لايف",
+        liveBody: "هتتفعل تلقائيًا في معاد الحصة.",
+        joinBtn: "انضم للحصة",
+        videosCount: (n) => `${n} فيديو`,
+        videoOf: (i, n) => `فيديو ${i} من ${n}`,
+        togglePlaylist: "إخفاء/إظهار قايمة الفيديوهات",
+        fullscreen: "ملء الشاشة",
+        showPlaylist: "إظهار قايمة الفيديوهات",
+        sessionErrorTitle: "معرفناش نجيب بيانات الحصة",
+        sessionErrorBody: "تأكد إنك مسجّل دخول وإن السيرفر شغال، أو جرّب تاني.",
+        retry: "إعادة المحاولة",
+        missingIdTitle: "رابط الحصة ناقص",
+        missingIdBody: "الرابط لازم يكون فيه ?id= لمعرّف الحصة.",
+        purchaseTitle: "اشترِ الوصول للحصة",
+        purchaseSub: "حوّل المبلغ، ابعت السكرين شوت على واتساب، واملأ بياناتك — هيتفعّل الوصول بعد ما نتأكد من التحويل.",
+        transferTo: "حوّل على الرقم (فودافون كاش / إنستاباي):",
+        transferHint: "تأكد من المبلغ قبل التحويل",
+        whatsappBtnText: "ابعت سكرين شوت التحويل على واتساب",
+        fullNameLabel: "الاسم الثلاثي",
+        phoneLabel: "رقم تليفون للتواصل",
+        cancelBtn: "إلغاء",
+        confirmTransferBtn: "تأكيد إني حوّلت",
+        confirmTransferBtnLoading: "بيتبعت...",
+        pendingTitle: "طلبك بقى قيد المراجعة",
+        pendingBody: 'هنراجع التحويل ونفعّل الوصول للحصة بأقرب وقت. تقدر تتابع حالة الطلب من صفحة "طلباتي".',
+        closeBtn: "تمام",
+        whatsappMsg: (title, amount) => `السلام عليكم، حوّلت ${amount} ج.م عشان حصة "${title}"، وده إثبات التحويل:`,
+        purchaseNeedLogin: "لازم تسجّل دخول الأول عشان تشتري الحصة.",
+      },
+      en: {
+        brandName: "Teacher Name", navCta: "Log In",
+        crumbHome: "Home", crumbClasses: "Courses",
+        backToSessions: "Back to sessions",
+        playlistTitle: "Session videos",
+        attachmentsTitle: "Attachments",
+        pdfLabel: "PDF file", pdfSub: "Session notes / summary",
+        assignmentLabel: "Homework", assignmentSub: "Solve the session homework",
+        openBtn: "Open", downloadBtn: "Download",
+        lockedTitle: "This session is locked",
+        lockedBody: (p) => `Buy access for ${p} EGP to unlock all videos and attachments.`,
+        unlockBtn: (p) => `Buy now — ${p} EGP`,
+        liveTitle: "This is a live session",
+        liveBody: "It will activate automatically at the scheduled time.",
+        joinBtn: "Join session",
+        videosCount: (n) => `${n} videos`,
+        videoOf: (i, n) => `Video ${i} of ${n}`,
+        togglePlaylist: "Show/hide video list",
+        fullscreen: "Fullscreen",
+        showPlaylist: "Show video list",
+        sessionErrorTitle: "Couldn't load the session",
+        sessionErrorBody: "Make sure you're logged in and the server is running, or try again.",
+        retry: "Retry",
+        missingIdTitle: "Missing session link",
+        missingIdBody: "The URL must include ?id= with the session id.",
+        purchaseTitle: "Buy access to this session",
+        purchaseSub: "Transfer the amount, send the screenshot on WhatsApp, and fill in your details — access activates once we confirm the transfer.",
+        transferTo: "Transfer to this number (Vodafone Cash / InstaPay):",
+        transferHint: "Double-check the amount before transferring",
+        whatsappBtnText: "Send transfer screenshot on WhatsApp",
+        fullNameLabel: "Full name",
+        phoneLabel: "Contact phone number",
+        cancelBtn: "Cancel",
+        confirmTransferBtn: "Confirm I've transferred",
+        confirmTransferBtnLoading: "Sending...",
+        pendingTitle: "Your order is under review",
+        pendingBody: 'We\'ll review the transfer and activate access soon. You can track your order from "My Orders".',
+        closeBtn: "Got it",
+        whatsappMsg: (title, amount) => `Hi, I transferred ${amount} EGP for the session "${title}", here's the proof:`,
+        purchaseNeedLogin: "Please log in first to buy this session.",
+      },
+    };
+
+    /* ============ قراءة id الحصة من الرابط ============ */
+    const params = new URLSearchParams(location.search);
+    const sessionId = params.get("id");
+
+    let sessionData = null;
+    let hasAccess = false;
+    let hasPendingOrder = false;
+    let activeVideoIndex = 0;
+    let i18n;
+
+    // نفس مشكلة i18n.getLang() اللي ظهرت في class.html ممكن تحصل هنا
+    // كمان لو أي حتة استخدمته قبل ما initI18n يخلص، فبنعمل helper آمن.
+    function getLang() {
+      if (i18n && typeof i18n.getLang === "function") return i18n.getLang();
+      return localStorage.getItem("lang") || "ar";
+    }
+
+    function authHeaders() {
+      const token = localStorage.getItem("token");
+      return { Authorization: `Bearer ${token || ""}` };
+    }
+
+    async function checkPendingOrder() {
+      hasPendingOrder = false;
+
+      try {
+        const res = await fetch("/orders", {
+          headers: authHeaders(),
+          credentials: "include",
+        });
+
+        if (!res.ok) return;
+
+        const data = await res.json();
+        const orders = data.orders || [];
+
+        hasPendingOrder = orders.some(
+          (order) =>
+            order.status === "pending" &&
+            order.sessionId?._id === sessionId
+        );
+      } catch (error) {
+        console.error("Check pending order error:", error);
+      }
+    }
+
+    /* ============ جلب بيانات الحصة من الباك اند فقط ============
+       preview/full content مش بيتقرر هنا خالص — القرار بيجي جاهز
+       من السيرفر عن طريق sessionAccessStatus middleware، إحنا بس
+       بنقرا hasAccess ونعرض على أساسه. */
+    async function loadSession() {
+      if (!sessionId) {
+        renderMissingId();
+        return;
+      }
+      try {
+        const res = await fetch(`/sessions/${sessionId}`, { headers: authHeaders() });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        hasAccess = !!data.hasAccess;
+        sessionData = data.session;
+
+        await checkPendingOrder();
+
+        paintFromSessionData();
+      } catch (err) {
+        console.error("loadSession error:", err);
+        renderSessionError();
+      }
+    }
+
+    function renderMissingId() {
+      const t = translations[getLang()];
+      const shell = document.getElementById("playerShell");
+      shell.classList.add("ready");
+      shell.innerHTML = `
+        <div class="player-error">
+          <div class="error-icon">⚠️</div>
+          <h3>${t.missingIdTitle}</h3>
+          <p>${t.missingIdBody}</p>
+        </div>`;
+      document.getElementById("playerControls").style.display = "none";
+    }
+
+    function renderSessionError() {
+      const t = translations[getLang()];
+      const shell = document.getElementById("playerShell");
+      shell.classList.add("ready");
+      shell.innerHTML = `
+        <div class="player-error">
+          <div class="error-icon">⚠️</div>
+          <h3>${t.sessionErrorTitle}</h3>
+          <p>${t.sessionErrorBody}</p>
+          <button class="unlock-btn" onclick="loadSession()">${t.retry}</button>
+        </div>`;
+      document.getElementById("playerControls").style.display = "none";
+      document.getElementById("playlistItems").innerHTML = `
+        <div class="error-inline">
+          ⚠️
+          <div><button class="retry-btn-sm" onclick="loadSession()">${t.retry}</button></div>
+        </div>`;
+      document.getElementById("playlistCount").textContent = "";
+      document.getElementById("attachmentsBox").style.display = "none";
+    }
+
+    function paintFromSessionData() {
+      const t = translations[getLang()];
+      document.getElementById("crumbSession").textContent = sessionData.title;
+      document.title = `${sessionData.title} | منصة الأستاذ`;
+
+      document.getElementById("crumbLesson").href = `lesson.html?id=${sessionData.lessonId}`;
+      document.getElementById("backBtn").onclick = () => { location.href = `lesson.html?id=${sessionData.lessonId}`; };
+
+      if (sessionData.type === "live") {
+        document.getElementById("playerControls").style.display = "none";
+        renderLivePlayer();
+        return;
+      }
+
+      if (!hasAccess) {
+        document.getElementById("playerControls").style.display = "none";
+        renderLockedPlayer();
+        renderLockedPlaylist();
+        document.getElementById("attachmentsBox").style.display = "none";
+        return;
+      }
+
+      document.getElementById("playerControls").style.display = "flex";
+      renderPlaylist();
+      renderAttachments();
+      selectVideo(activeVideoIndex);
+    }
+
+    /* ============ حالة: لايف ============ */
+    function renderLivePlayer() {
+      const t = translations[getLang()];
+      const shell = document.getElementById("playerShell");
+      shell.classList.add("ready");
+      shell.innerHTML = `
+        <div class="player-live">
+          <div class="live-icon">🔴</div>
+          <h3>${t.liveTitle}</h3>
+          <p>${t.liveBody}</p>
+          ${sessionData.meetingUrl ? `<a class="unlock-btn" href="${sessionData.meetingUrl}" target="_blank" rel="noopener">${t.joinBtn}</a>` : ""}
+        </div>`;
+      document.getElementById("currentVideoTitle").textContent = sessionData.title;
+      document.getElementById("playlistBox").style.display = "none";
+    }
+
+    /* ============ حالة: مقفولة (السيرفر قال hasAccess:false) ============ */
+    function renderLockedPlayer() {
+      const t = translations[getLang()];
+      const shell = document.getElementById("playerShell");
+
+      shell.classList.add("ready");
+
+      if (hasPendingOrder) {
+        shell.innerHTML = `
+          <div class="player-locked">
+            <div class="lock-icon">⏳</div>
+            <h3>${t.pendingTitle}</h3>
+            <p>${t.pendingBody}</p>
+          </div>
+        `;
+      } else {
+        shell.innerHTML = `
+          <div class="player-locked">
+            <div class="lock-icon">🔒</div>
+            <h3>${t.lockedTitle}</h3>
+            <p>${t.lockedBody(sessionData.price)}</p>
+            <button class="unlock-btn" id="unlockBtn">
+              ${t.unlockBtn(sessionData.price)}
+            </button>
+          </div>
+        `;
+
+        document
+          .getElementById("unlockBtn")
+          .addEventListener("click", openPurchaseModal);
+      }
+
+      document.getElementById("currentVideoTitle").textContent =
+        sessionData.title;
+
+      document.getElementById("currentVideoMeta").textContent =
+        sessionData.description || "";
+    }
+
+    function renderLockedPlaylist() {
+      document.getElementById("playlistItems").innerHTML = `
+        <div style="padding:20px;text-align:center;color:var(--text-dim);font-size:13.5px;">🔒</div>
+      `;
+      document.getElementById("playlistCount").textContent = "";
+    }
+
+    /* ============ Playlist + Player الفعلي (السيرفر قال hasAccess:true) ============ */
+    function renderPlaylist() {
+      const t = translations[getLang()];
+      const videos = sessionData.videos || [];
+      document.getElementById("playlistCount").textContent = t.videosCount(videos.length);
+
+      document.getElementById("playlistItems").innerHTML = videos.map((v, i) => `
+        <div class="playlist-item ${i === activeVideoIndex ? "active" : ""}" data-index="${i}">
+          <div class="idx">${v.order ?? i + 1}</div>
+          <div class="p-title">${v.title}</div>
+          <div class="play-mark">${i === activeVideoIndex ? "▶" : ""}</div>
+        </div>
+      `).join("");
+
+      document.querySelectorAll(".playlist-item").forEach((el) => {
+        el.addEventListener("click", () => selectVideo(parseInt(el.dataset.index, 10)));
+      });
+    }
+
+    function selectVideo(index) {
+      const videos = sessionData.videos || [];
+      if (!videos[index]) return;
+      activeVideoIndex = index;
+
+      const shell = document.getElementById("playerShell");
+      shell.classList.remove("ready");
+
+      // نعمل "تكبيرة" بصرية بسيطة لحظة تغيير الفيديو
+      setTimeout(() => {
+        shell.innerHTML = `<iframe src="${videos[index].embedUrl}" allow="autoplay; fullscreen" allowfullscreen loading="lazy"></iframe>`;
+        requestAnimationFrame(() => shell.classList.add("ready"));
+      }, 120);
+
+      const t = translations[getLang()];
+      document.getElementById("currentVideoTitle").textContent = videos[index].title;
+      document.getElementById("currentVideoMeta").textContent = t.videoOf(index + 1, videos.length);
+
+      document.querySelectorAll(".playlist-item").forEach((el, i) => {
+        el.classList.toggle("active", i === index);
+        el.querySelector(".play-mark").textContent = i === index ? "▶" : "";
+      });
+    }
+
+    /* ============ المرفقات (بتظهر بس مع hasAccess:true من السيرفر) ============ */
+    function renderAttachments() {
+      const t = translations[getLang()];
+      const box = document.getElementById("attachmentsBox");
+      const list = document.getElementById("attachmentsList");
+      let html = "";
+
+      if (sessionData.pdf && (sessionData.pdf.url || typeof sessionData.pdf === "string")) {
+        const url = sessionData.pdf.url || sessionData.pdf;
+        const title = sessionData.pdf.title || t.pdfLabel;
+        html += `
+          <div class="attachment-row">
+            <div class="a-icon">📄</div>
+            <div class="a-info"><strong>${title}</strong><span>${t.pdfSub}</span></div>
+            <a class="a-btn" href="${url}" target="_blank" rel="noopener">${t.openBtn}</a>
+          </div>`;
+      }
+
+      if (sessionData.assignment && (sessionData.assignment.url || sessionData.assignment.title)) {
+        const a = sessionData.assignment;
+        html += `
+          <div class="attachment-row">
+            <div class="a-icon">📝</div>
+            <div class="a-info"><strong>${a.title || t.assignmentLabel}</strong><span>${a.description || t.assignmentSub}</span></div>
+            ${a.url ? `<a class="a-btn" href="${a.url}" target="_blank" rel="noopener">${t.downloadBtn}</a>` : ""}
+          </div>`;
+      }
+
+      if (!html) { box.style.display = "none"; return; }
+      box.style.display = "flex";
+      list.innerHTML = html;
+    }
+
+    /* ============ تصغير/إظهار قايمة الفيديوهات ============ */
+    const sessionLayout = document.getElementById("sessionLayout");
+
+    function setPlaylistCollapsed(collapsed) {
+      sessionLayout.classList.toggle("playlist-collapsed", collapsed);
+      const btn = document.getElementById("togglePlaylistBtn");
+      btn.classList.toggle("active", collapsed);
+    }
+
+    document.getElementById("togglePlaylistBtn").addEventListener("click", () => {
+      setPlaylistCollapsed(!sessionLayout.classList.contains("playlist-collapsed"));
+    });
+
+    document.getElementById("reopenPlaylistBtn").addEventListener("click", () => {
+      setPlaylistCollapsed(false);
+    });
+
+    /* ============ ملء الشاشة للفيديو ============ */
+    document.getElementById("fullscreenBtn").addEventListener("click", () => {
+      const shell = document.getElementById("playerShell");
+      const req = shell.requestFullscreen || shell.webkitRequestFullscreen || shell.msRequestFullscreen;
+      if (req) {
+        req.call(shell);
+      } else if (document.exitFullscreen || document.webkitExitFullscreen) {
+        (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+      }
+    });
+
+    /* ============ مودال الشراء (تحويل يدوي + واتساب) ============ */
+    const WHATSAPP_NUMBER = "201119103460"; // بصيغة دولية من غير + أو أصفار، لازم يتطابق مع رقم التحويل
+
+    function openPurchaseModal() {
+      const t = translations[getLang()];
+
+      document.getElementById("purchaseFormState").style.display = "block";
+      document.getElementById("purchaseSuccessState").style.display = "none";
+      document.getElementById("purchaseForm").reset();
+      hidePurchaseMsg();
+
+      const amountText = getLang() === "ar" ? `${sessionData.price} ج.م` : `${sessionData.price} EGP`;
+      document.getElementById("purchaseAmount").textContent = amountText;
+
+      const waMessage = encodeURIComponent(t.whatsappMsg(sessionData.title, sessionData.price));
+      document.getElementById("whatsappBtn").href = `https://wa.me/${WHATSAPP_NUMBER}?text=${waMessage}`;
+
+      document.getElementById("purchaseOverlay").classList.add("show");
+    }
+
+    function closePurchaseModal() {
+      document.getElementById("purchaseOverlay").classList.remove("show");
+    }
+
+    function showPurchaseMsg(text, type) {
+      const el = document.getElementById("purchaseMsg");
+      el.textContent = text;
+      el.className = `purchase-msg show ${type}`;
+    }
+
+    function hidePurchaseMsg() {
+      const el = document.getElementById("purchaseMsg");
+      el.className = "purchase-msg";
+    }
+
+    document.getElementById("purchaseCancelBtn").addEventListener("click", closePurchaseModal);
+    document.getElementById("purchaseOverlay").addEventListener("click", (e) => {
+      if (e.target.id === "purchaseOverlay") closePurchaseModal();
+    });
+    document.getElementById("purchaseCloseBtn").addEventListener("click", () => {
+      closePurchaseModal();
+      window.location.reload();
+    });
+
+    document.getElementById("purchaseForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const t = translations[getLang()];
+      hidePurchaseMsg();
+
+      const studentName = document.getElementById("purchaseName").value.trim();
+      const studentPhone = document.getElementById("purchasePhone").value.trim();
+      if (!studentName || !studentPhone) return;
+
+      const submitBtn = document.getElementById("purchaseSubmitBtn");
+      submitBtn.disabled = true;
+      submitBtn.textContent = t.confirmTransferBtnLoading;
+
+      try {
+        const res = await fetch("/orders", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId, studentName, studentPhone }),
+        });
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          // لو فيه طلب معلّق بالفعل لنفس الحصة، نوريه كحالة انتظار
+          // عادية بدل رسالة خطأ — مفيش داعي يحاول تاني
+          if (res.status === 400 && /pending order/i.test(data.message || "")) {
+            document.getElementById("purchaseFormState").style.display = "none";
+            document.getElementById("purchaseSuccessState").style.display = "block";
+            return;
+          }
+          throw new Error(data.message || `HTTP ${res.status}`);
+        }
+
+        document.getElementById("purchaseFormState").style.display = "none";
+        document.getElementById("purchaseSuccessState").style.display = "block";
+      } catch (err) {
+        showPurchaseMsg(err.message, "error");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = t.confirmTransferBtn;
+      }
+    });
+
+    i18n = initI18n(translations, () => {
+      if (sessionData) paintFromSessionData();
+    });
+
+    loadSession();
+  </script>
+
+</body>
+</html>

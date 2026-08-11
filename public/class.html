@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>تفاصيل الكورس | منصة الأستاذ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared/style.css">
+<style>
+  /* ============ خاص بالصفحة دي بس ============ */
+  .wrap { max-width: 980px; }
+
+  /* ============ CLASS HEADER ============ */
+  .class-header {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    gap: 24px;
+    align-items: center;
+    padding: 26px 0 34px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 30px;
+  }
+
+  @media (max-width: 640px) { .class-header { flex-direction: column; align-items: flex-start; } }
+
+  .class-thumb-lg {
+    width: 120px;
+    height: 120px;
+    flex-shrink: 0;
+    border-radius: var(--radius);
+    background:
+      radial-gradient(circle at 30% 20%, color-mix(in srgb, var(--accent) 35%, transparent), transparent 60%),
+      var(--surface-2);
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .class-thumb-lg img { width: 100%; height: 100%; object-fit: cover; }
+
+  .class-thumb-lg .fallback {
+    width: 54px; height: 54px; border-radius: 12px;
+    background: var(--accent); color: var(--accent-ink);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 22px;
+  }
+
+  .class-header h1 { font-size: 26px; font-weight: 800; margin-bottom: 8px; }
+  .class-header p { color: var(--text-dim); font-size: 14.5px; line-height: 1.8; max-width: 560px; }
+
+  .class-meta-row { display: flex; gap: 16px; margin-top: 12px; flex-wrap: wrap; font-size: 13.5px; color: var(--text-dim); }
+  .class-meta-row span { display: flex; align-items: center; gap: 6px; }
+
+  /* ============ SEARCH BAR ============ */
+  .lessons-toolbar {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 22px;
+  }
+
+  .search-box { position: relative; flex: 1; }
+
+  .search-box input {
+    width: 100%;
+    padding: 13px 44px 13px 16px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14.5px;
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+
+  .search-box input:focus { border-color: var(--accent); }
+  .search-box input::placeholder { color: var(--text-dim); }
+
+  .search-box .icon {
+    position: absolute;
+    inset-inline-end: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-dim);
+    font-size: 15px;
+    pointer-events: none;
+  }
+
+  .lessons-count { font-size: 13.5px; color: var(--text-dim); white-space: nowrap; }
+
+  /* ============ LESSONS LIST ============ */
+  .lessons-list {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-bottom: 100px;
+  }
+
+  .lesson-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .lesson-row:hover {
+    border-color: color-mix(in srgb, var(--accent) 50%, var(--border));
+    transform: translateX(-2px);
+    box-shadow: 0 10px 30px -18px color-mix(in srgb, var(--accent) 55%, transparent);
+  }
+
+  html[dir="rtl"] .lesson-row:hover { transform: translateX(2px); }
+
+  .lesson-order {
+    width: 38px; height: 38px;
+    flex-shrink: 0;
+    border-radius: 10px;
+    background: var(--surface-2);
+    color: var(--text-dim);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+  }
+
+  .lesson-info { flex: 1; min-width: 0; }
+  .lesson-info h4 { font-size: 15.5px; font-weight: 700; margin-bottom: 4px; }
+  .lesson-info .lesson-sub { font-size: 13px; color: var(--text-dim); }
+
+  .lesson-arrow {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: var(--surface-2);
+    color: var(--text-dim);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .lesson-row:hover .lesson-arrow { background: var(--accent); color: var(--accent-ink); }
+
+  /* ============ حالة الخطأ (مفيش fallback وهمي دلوقتي) ============ */
+  .error-state {
+    text-align: center; padding: 60px 20px; color: var(--text-dim);
+  }
+  .error-state .icon {
+    width: 56px; height: 56px; margin: 0 auto 16px; border-radius: 16px;
+    background: color-mix(in srgb, var(--live, #E14F4F) 16%, transparent);
+    display: flex; align-items: center; justify-content: center; font-size: 22px;
+  }
+  .error-state .retry-btn {
+    margin-top: 14px; padding: 10px 20px; border-radius: 10px;
+    border: 1px solid var(--border); background: var(--surface);
+    color: var(--text); font-weight: 700; font-size: 13.5px; cursor: pointer;
+  }
+  .error-state .retry-btn:hover { border-color: var(--text-dim); }
+</style>
+</head>
+<body>
+
+  <div class="bg-decor"><div class="glow"></div></div>
+
+  <nav>
+    <div class="brand">
+      <a href="home.html" class="brand-logo"><span class="logo-fy">fy</span><span class="logo-edu">Edu</span></a>
+    </div>
+    <div class="nav-links">
+      <a href="home.html" data-i18n="navHome">الرئيسية</a>
+      <a href="classes.html" class="active" data-i18n="navClasses">الكورسات</a>
+      <a href="about.html" data-i18n="navAbout">من أنا</a>
+      <a href="contact.html" data-i18n="navContact">تواصل</a>
+    </div>
+
+    <div class="nav-right">
+      <button class="icon-btn" id="langToggle" title="تغيير اللغة">EN</button>
+      <button class="icon-btn" id="themeToggle" title="تبديل الوضع">🌙</button>
+      <a href="home.html" class="btn-cta" data-i18n="navCta">سجّل دخول</a>
+    </div>
+  </nav>
+
+  <div class="wrap">
+
+    <!-- المسار: بيوضح "هو فين" دايمًا -->
+    <div class="breadcrumb" id="breadcrumb">
+      <a href="home.html" data-i18n="crumbHome">الرئيسية</a>
+      <span class="sep">/</span>
+      <a href="classes.html" data-i18n="crumbClasses">الكورسات</a>
+      <span class="sep">/</span>
+      <span class="current" id="crumbCurrent">...</span>
+    </div>
+
+    <!-- زرار رجوع صريح لصفحة الكورسات -->
+    <button class="back-btn" onclick="location.href='classes.html'">
+      <span>→</span>
+      <span data-i18n="backToClasses">رجوع لكل الكورسات</span>
+    </button>
+
+    <header class="class-header" id="classHeader">
+      <div class="class-thumb-lg skeleton" id="classThumb"></div>
+      <div style="flex:1;">
+        <div class="skeleton" style="height:26px;width:50%;border-radius:6px;margin-bottom:10px;"></div>
+        <div class="skeleton" style="height:14px;width:80%;border-radius:6px;"></div>
+      </div>
+    </header>
+
+    <div class="lessons-toolbar">
+      <div class="search-box">
+        <input type="text" id="lessonSearch" placeholder="ابحث عن درس..." data-i18n-placeholder="searchPlaceholder" />
+        <span class="icon">🔍</span>
+      </div>
+      <span class="lessons-count" id="lessonsCount"></span>
+    </div>
+
+    <div class="lessons-list" id="lessonsList">
+      <!-- سكيلتون مبدئي -->
+    </div>
+
+  </div>
+
+  <script src="shared/app.js"></script>
+  <script>
+    /* ============ ترجمة الصفحة دي ============ */
+    const translations = {
+      ar: {
+        brandName: "اسم الأستاذ", navCta: "سجّل دخول",
+        crumbHome: "الرئيسية", crumbClasses: "الكورسات",
+        backToClasses: "رجوع لكل الكورسات",
+        searchPlaceholder: "ابحث عن درس...",
+        lessonsFound: (n) => `${n} درس`,
+        emptyTitle: "مفيش دروس تطابق بحثك",
+        emptyBody: "جرّب كلمة تانية أو امسح البحث.",
+        emptyClassTitle: "الكورس ده لسه من غير دروس",
+        classErrorTitle: "معرفناش نجيب بيانات الكورس",
+        lessonsErrorTitle: "معرفناش نجيب الدروس",
+        errorBody: "تأكد إن السيرفر شغال، أو جرّب تاني.",
+        retry: "إعادة المحاولة",
+      },
+      en: {
+        brandName: "Teacher Name", navCta: "Log In",
+        crumbHome: "Home", crumbClasses: "Courses",
+        backToClasses: "Back to all courses",
+        searchPlaceholder: "Search lessons...",
+        lessonsFound: (n) => `${n} lessons`,
+        emptyTitle: "No lessons match your search",
+        emptyBody: "Try a different word or clear the search.",
+        emptyClassTitle: "This course has no lessons yet",
+        classErrorTitle: "Couldn't load the course",
+        lessonsErrorTitle: "Couldn't load the lessons",
+        errorBody: "Make sure the server is running, or try again.",
+        retry: "Retry",
+      },
+    };
+
+    /* ============ قراءة id الكلاس من الرابط ============ */
+    const params = new URLSearchParams(location.search);
+    const classId = params.get("id");
+
+    let allLessons = [];
+    let currentQuery = "";
+    let i18n;
+
+    // initI18n بتنده الـ callback بتاعتها *قبل* ما ترجع وتتحط في i18n،
+    // فوقت أول نداء للـ callback يبقى i18n لسه undefined. الدالة دي
+    // بتتفادى المشكلة دي بقراءة اللغة من localStorage كـ fallback.
+    function getLang() {
+      if (i18n && typeof i18n.getLang === "function") return i18n.getLang();
+      return localStorage.getItem("lang") || "ar";
+    }
+
+    function authHeaders() {
+      const token = localStorage.getItem("token");
+      return token ? { Authorization: `Bearer ${token}` } : {};
+    }
+
+    /* ============ بيانات الكورس — من الباك اند فقط، من غير أي fallback وهمي ============ */
+    async function loadClass() {
+      if (!classId) {
+        renderClassError();
+        return;
+      }
+      try {
+        const res = await fetch(`/classes/${classId}`, { headers: authHeaders() });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        paintClassHeader(data.class);
+      } catch (err) {
+        console.error("loadClass error:", err);
+        renderClassError();
+      }
+    }
+
+    function renderClassError() {
+      const t = translations[getLang()];
+      document.getElementById("classHeader").innerHTML = `
+        <div class="error-state" style="width:100%;">
+          <div class="icon">⚠️</div>
+          <h3 style="color:var(--text);margin-bottom:6px;">${t.classErrorTitle}</h3>
+          <p>${t.errorBody}</p>
+          <button class="retry-btn" onclick="loadClass()">${t.retry}</button>
+        </div>
+      `;
+    }
+
+    function paintClassHeader(cls) {
+      document.getElementById("crumbCurrent").textContent = cls.title;
+      document.title = `${cls.title} | منصة الأستاذ`;
+
+      document.getElementById("classHeader").innerHTML = `
+        <div class="class-thumb-lg" id="classThumb">
+          ${cls.thumbnail
+            ? `<img src="${cls.thumbnail}" alt="${cls.title}" />`
+            : `<div class="fallback">${(cls.title || "?").trim().charAt(0)}</div>`}
+        </div>
+        <div style="flex:1;">
+          <h1>${cls.title}</h1>
+          <p>${cls.description || ""}</p>
+          <div class="class-meta-row">
+            <span id="metaLessonsCount">📖 —</span>
+          </div>
+        </div>
+      `;
+
+      // لو الدروس اتحملت قبل بيانات الكورس، حدّث العداد فورًا
+      if (allLessons.length) updateLessonsMeta();
+    }
+
+    function updateLessonsMeta() {
+      const metaEl = document.getElementById("metaLessonsCount");
+      if (metaEl) metaEl.textContent = `📖 ${allLessons.length} ${getLang() === "ar" ? "درس" : "lessons"}`;
+    }
+
+    /* ============ الدروس — من الباك اند فقط ============ */
+    async function loadLessons() {
+      if (!classId) {
+        renderLessonsError();
+        return;
+      }
+      try {
+        const res = await fetch(`/classes/${classId}/lessons`, { headers: authHeaders() });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        allLessons = data.lessons || [];
+        updateLessonsMeta();
+        renderLessons(currentQuery);
+      } catch (err) {
+        console.error("loadLessons error:", err);
+        renderLessonsError();
+      }
+    }
+
+    function renderLessonsError() {
+      const t = translations[getLang()];
+      document.getElementById("lessonsList").innerHTML = `
+        <div class="error-state">
+          <div class="icon">⚠️</div>
+          <h3 style="color:var(--text);margin-bottom:6px;">${t.lessonsErrorTitle}</h3>
+          <p>${t.errorBody}</p>
+          <button class="retry-btn" onclick="loadLessons()">${t.retry}</button>
+        </div>
+      `;
+      document.getElementById("lessonsCount").textContent = "";
+    }
+
+    function renderLessonsCount() {
+      const el = document.getElementById("lessonsCount");
+      const filtered = filterLessons(currentQuery);
+      el.textContent = translations[getLang()].lessonsFound(filtered.length);
+    }
+
+    function filterLessons(query) {
+      if (!query.trim()) return allLessons;
+      const q = query.trim().toLowerCase();
+      return allLessons.filter((l) => l.title.toLowerCase().includes(q));
+    }
+
+    function lessonRowTemplate(lesson) {
+      return `
+        <a class="lesson-row" href="lesson.html?id=${lesson._id}">
+          <div class="lesson-order">${lesson.order}</div>
+          <div class="lesson-info">
+            <h4>${lesson.title}</h4>
+            <span class="lesson-sub">${getLang() === "ar" ? "اضغط لعرض حصص الدرس" : "Tap to view sessions"}</span>
+          </div>
+          <div class="lesson-arrow">←</div>
+        </a>
+      `;
+    }
+
+    function renderLessons(query) {
+      const list = document.getElementById("lessonsList");
+      const filtered = filterLessons(query);
+      renderLessonsCount();
+
+      if (!allLessons.length) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <div class="icon">📭</div>
+            <h3 style="color:var(--text);margin-bottom:8px;">${translations[getLang()].emptyClassTitle}</h3>
+          </div>`;
+        return;
+      }
+
+      if (!filtered.length) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <div class="icon">🔍</div>
+            <h3 style="color:var(--text);margin-bottom:8px;">${translations[getLang()].emptyTitle}</h3>
+            <p>${translations[getLang()].emptyBody}</p>
+          </div>`;
+        return;
+      }
+
+      list.innerHTML = filtered.map(lessonRowTemplate).join("");
+    }
+
+    function skeletonRows(n = 5) {
+      const list = document.getElementById("lessonsList");
+      list.innerHTML = Array.from({ length: n }).map(() => `
+        <div class="lesson-row">
+          <div class="skeleton" style="width:38px;height:38px;border-radius:10px;"></div>
+          <div style="flex:1;">
+            <div class="skeleton" style="height:15px;width:40%;border-radius:6px;margin-bottom:6px;"></div>
+            <div class="skeleton" style="height:12px;width:25%;border-radius:6px;"></div>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    /* ============ شريط البحث — فلترة لحظية على الدروس اللي اتحملت ============ */
+    document.getElementById("lessonSearch").addEventListener("input", (e) => {
+      currentQuery = e.target.value;
+      renderLessons(currentQuery);
+    });
+
+    i18n = initI18n(translations, () => {
+      renderLessonsCount();
+      renderLessons(currentQuery);
+    });
+
+    skeletonRows();
+    loadClass();
+    loadLessons();
+  </script>
+
+</body>
+</html>

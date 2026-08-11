@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>حسابي | منصة الأستاذ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared/style.css">
+<style>
+  .wrap { max-width: 900px; }
+
+  .account-page {
+    position: relative;
+    z-index: 1;
+    padding: 48px 0 100px;
+  }
+
+  .account-header {
+    margin-bottom: 28px;
+  }
+
+  .account-header h1 {
+    font-size: 28px;
+    font-weight: 800;
+    margin-bottom: 6px;
+  }
+
+  .account-header p {
+    color: var(--text-dim);
+    font-size: 14px;
+  }
+
+  .account-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 26px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .account-tab {
+    border: 0;
+    background: transparent;
+    color: var(--text-dim);
+    font: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    padding: 12px 6px;
+    cursor: pointer;
+    position: relative;
+    top: 1px;
+  }
+
+  .account-tab.active {
+    color: var(--accent);
+    border-bottom: 2px solid var(--accent);
+  }
+
+  .account-view { display: none; }
+  .account-view.active { display: block; }
+
+  .item-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .item-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .item-info h3 {
+    font-size: 15.5px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .item-info p {
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+
+  .item-side {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .status-pill {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 5px 12px;
+    border-radius: 100px;
+    white-space: nowrap;
+  }
+
+  .status-pill.pending { background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent); }
+  .status-pill.paid { background: color-mix(in srgb, var(--free) 16%, transparent); color: var(--free); }
+  .status-pill.rejected { background: color-mix(in srgb, var(--live) 14%, transparent); color: var(--live); }
+
+  .item-cta {
+    padding: 9px 16px;
+    border-radius: 9px;
+    background: var(--surface-2);
+    color: var(--text);
+    font-size: 13.5px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .item-card:hover .item-cta { background: var(--accent); color: var(--accent-ink); }
+</style>
+</head>
+<body>
+
+  <div class="bg-decor"><div class="glow"></div></div>
+
+  <nav>
+    <div class="brand">
+      <a href="home.html" class="brand-logo"><span class="logo-fy">fy</span><span class="logo-edu">Edu</span></a>
+    </div>
+
+    <div class="nav-links">
+      <a href="home.html" data-i18n="navHome">الرئيسية</a>
+      <a href="classes.html" data-i18n="navClasses">الكورسات</a>
+      <a href="about.html" data-i18n="navAbout">من أنا</a>
+      <a href="contact.html" data-i18n="navContact">تواصل</a>
+    </div>
+
+    <div class="nav-right">
+      <button class="icon-btn" id="langToggle" title="تغيير اللغة">EN</button>
+      <button class="icon-btn" id="themeToggle" title="تبديل الوضع">🌙</button>
+      <a href="auth.html" class="btn-cta" data-i18n="navCta">سجّل دخول</a>
+    </div>
+  </nav>
+
+  <div class="wrap">
+    <main class="account-page">
+      <div class="account-header">
+        <h1 data-i18n="accTitle">حسابي</h1>
+        <p data-i18n="accSubtitle">طلباتك وحصصك المشتراة في مكان واحد.</p>
+      </div>
+
+      <div class="account-tabs">
+        <button class="account-tab active" data-tab="orders" data-i18n="tabOrders">🧾 طلباتي</button>
+        <button class="account-tab" data-tab="sessions" data-i18n="tabSessions">🎥 حصصي</button>
+      </div>
+
+      <section id="ordersView" class="account-view active">
+        <div class="item-list" id="ordersList"></div>
+      </section>
+
+      <section id="sessionsView" class="account-view">
+        <div class="item-list" id="sessionsList"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="shared/app.js"></script>
+  <script>
+    const translations = {
+      ar: {
+        brandName: "اسم الأستاذ", navHome: "الرئيسية", navClasses: "الكورسات",
+        navAbout: "من أنا", navContact: "تواصل", navCta: "سجّل دخول",
+        accTitle: "حسابي", accSubtitle: "طلباتك وحصصك المشتراة في مكان واحد.",
+        tabOrders: "🧾 طلباتي", tabSessions: "🎥 حصصي",
+        statusPending: "قيد المراجعة", statusPaid: "مؤكد", statusRejected: "مرفوض",
+        ctaOpenSession: "افتح الحصة", ctaViewOrder: "التفاصيل",
+        emptyOrders: "لسه ملكش أي طلبات.", emptySessions: "لسه ملكش أي حصص مشتراة.",
+        loginNeeded: "لازم تسجّل دخول الأول عشان تشوف حسابك.",
+      },
+      en: {
+        brandName: "Teacher Name", navHome: "Home", navClasses: "Courses",
+        navAbout: "About", navContact: "Contact", navCta: "Log In",
+        accTitle: "My Account", accSubtitle: "Your orders and purchased sessions in one place.",
+        tabOrders: "🧾 My Orders", tabSessions: "🎥 My Sessions",
+        statusPending: "Pending", statusPaid: "Confirmed", statusRejected: "Rejected",
+        ctaOpenSession: "Open Session", ctaViewOrder: "Details",
+        emptyOrders: "You don't have any orders yet.", emptySessions: "You haven't purchased any sessions yet.",
+        loginNeeded: "Please log in to view your account.",
+      },
+    };
+
+    let i18n;
+    let allOrders = [];
+
+    // حماية ضد initI18n لما بينادي الـ callback بتاعها (اللي بيعمل render)
+    // بشكل فوري جوّا نفسه — يعني ممكن render() تتنادى قبل ما السطر
+    // "i18n = initI18n(...)" يخلص تنفيذه ويدّي i18n قيمته. من غيرها،
+    // i18n.getLang() كانت بترمي TypeError في نص الـ script (مش جوه
+    // async function ولا event handler)، وده كان بيوقف تنفيذ باقي
+    // الملف بالكامل — يعني loadOrders() ماكانتش بتتنادى أصلاً، ولا
+    // حتى الـ catch بتاعتها كان بيوصله دور. نفس الحماية المستخدمة في
+    // session.html.
+    function getLang() {
+      if (i18n && typeof i18n.getLang === "function") return i18n.getLang();
+      return localStorage.getItem("lang") || "ar";
+    }
+
+    const ordersList = document.getElementById("ordersList");
+    const sessionsList = document.getElementById("sessionsList");
+
+    const statusLabelKey = { pending: "statusPending", paid: "statusPaid", rejected: "statusRejected" };
+
+    function orderCard(order, t) {
+      const s = order.sessionId || {};
+      return `
+        <div class="item-card">
+          <div class="item-info">
+            <h3>${s.title || "—"}</h3>
+            <p>${order.amount ?? s.price ?? 0} ${t.currency || ""}</p>
+          </div>
+          <div class="item-side">
+            <span class="status-pill ${order.status}">${t[statusLabelKey[order.status]] || order.status}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function sessionCard(order, t) {
+      const s = order.sessionId || {};
+      return `
+        <a class="item-card" href="session.html?id=${s._id || ""}" style="display:flex;">
+          <div class="item-info">
+            <h3>${s.title || "—"}</h3>
+            <p>${s.description || ""}</p>
+          </div>
+          <div class="item-side">
+            <span class="item-cta">${t.ctaOpenSession}</span>
+          </div>
+        </a>
+      `;
+    }
+
+    function renderEmpty(container, text) {
+      container.innerHTML = `<div class="empty-state"><div class="icon">📭</div><p>${text}</p></div>`;
+    }
+
+    function render() {
+      const t = translations[getLang()];
+
+      if (!allOrders.length) {
+        renderEmpty(ordersList, t.emptyOrders);
+      } else {
+        ordersList.innerHTML = allOrders.map((o) => orderCard(o, t)).join("");
+      }
+
+      const paidOrders = allOrders.filter((o) => o.status === "paid");
+      if (!paidOrders.length) {
+        renderEmpty(sessionsList, t.emptySessions);
+      } else {
+        sessionsList.innerHTML = paidOrders.map((o) => sessionCard(o, t)).join("");
+      }
+    }
+
+    async function loadOrders() {
+      try {
+        const res = await fetch("/orders", { credentials: "include" });
+        if (res.status === 401) {
+          const t = translations[getLang()];
+          renderEmpty(ordersList, t.loginNeeded);
+          renderEmpty(sessionsList, t.loginNeeded);
+          return;
+        }
+        if (!res.ok) throw new Error("bad response");
+        const data = await res.json();
+        allOrders = data.orders || [];
+        render();
+      } catch (err) {
+        console.error("loadOrders error:", err);
+        const t = translations[getLang()];
+        renderEmpty(ordersList, t.emptyOrders);
+        renderEmpty(sessionsList, t.emptySessions);
+      }
+    }
+
+    /* تبويبات */
+    document.querySelectorAll(".account-tab").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".account-tab").forEach((b) => b.classList.remove("active"));
+        document.querySelectorAll(".account-view").forEach((v) => v.classList.remove("active"));
+        btn.classList.add("active");
+        document.getElementById(btn.dataset.tab + "View").classList.add("active");
+      });
+    });
+
+    /* فتح التبويب المطلوب لو جاي من رابط زي account.html?tab=sessions */
+    const requestedTab = new URLSearchParams(window.location.search).get("tab");
+    if (requestedTab === "sessions") {
+      document.querySelector('[data-tab="sessions"]').click();
+    }
+
+    i18n = initI18n(translations, () => render());
+    loadOrders();
+  </script>
+
+</body>
+</html>

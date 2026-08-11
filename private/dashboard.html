@@ -1,0 +1,1873 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>لوحة التحكم | منصة الأستاذ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- tus-js-client: للرفع المباشر للفيديو على Bunny من جوه فورم الحصة -->
+<script src="https://cdn.jsdelivr.net/npm/tus-js-client@4/dist/tus.min.js"></script>
+<link rel="stylesheet" href="shared/style.css">
+<style>
+  /* ============ خاص بالداشبورد بس ============ */
+  .wrap { max-width: 1280px; }
+
+  .dash-shell {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 28px;
+    padding: 28px 0 100px;
+    position: relative;
+    z-index: 1;
+  }
+
+  @media (max-width: 860px) {
+    .dash-shell { grid-template-columns: 1fr; }
+  }
+
+  /* ============ SIDEBAR ============ */
+  .sidebar {
+    position: sticky;
+    top: 90px;
+    align-self: start;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  @media (max-width: 860px) {
+    .sidebar { position: static; flex-direction: row; overflow-x: auto; }
+  }
+
+  .side-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    color: var(--text-dim);
+    font-size: 14.5px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    border: 1px solid transparent;
+    background: transparent;
+    text-align: right;
+    width: 100%;
+    font-family: inherit;
+  }
+
+  .side-link:hover { background: var(--surface); color: var(--text); }
+
+  .side-link.active {
+    background: var(--surface);
+    border-color: var(--border);
+    color: var(--accent);
+  }
+
+  .side-link.soon {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .side-link .badge-soon {
+    font-size: 10.5px;
+    background: var(--surface-2);
+    color: var(--text-dim);
+    padding: 2px 7px;
+    border-radius: 100px;
+    margin-inline-start: auto;
+  }
+
+  /* ============ MAIN VIEWS ============ */
+  .dash-view { display: none; }
+  .dash-view.active { display: block; }
+
+  .view-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 22px;
+    flex-wrap: wrap;
+  }
+
+  .view-header h1 { font-size: 24px; font-weight: 800; }
+  .view-header p { color: var(--text-dim); font-size: 13.5px; margin-top: 4px; }
+
+  .btn-primary {
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-weight: 700;
+    padding: 11px 20px;
+    border-radius: 10px;
+    font-size: 14px;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 9px 16px;
+    border-radius: 9px;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .btn-outline:hover { border-color: var(--text-dim); }
+
+  .btn-danger {
+    background: transparent;
+    border: 1px solid color-mix(in srgb, var(--live) 40%, var(--border));
+    color: var(--live);
+    padding: 8px 14px;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .btn-danger:hover { background: color-mix(in srgb, var(--live) 10%, transparent); }
+
+  .btn-sm {
+    padding: 7px 12px;
+    font-size: 12.5px;
+    border-radius: 8px;
+  }
+
+  /* ============ CLASS TREE ============ */
+  .class-node {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+
+  .class-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 18px;
+    cursor: pointer;
+  }
+
+  .expand-icon {
+    width: 26px; height: 26px;
+    flex-shrink: 0;
+    border-radius: 7px;
+    background: var(--surface-2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    color: var(--text-dim);
+    transition: transform 0.15s ease;
+  }
+
+  .class-node.expanded .expand-icon { transform: rotate(90deg); }
+
+  .node-thumb {
+    width: 42px; height: 42px;
+    border-radius: 9px;
+    background: var(--surface-2);
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800;
+    color: var(--accent);
+    overflow: hidden;
+  }
+  .node-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+  .node-info { flex: 1; min-width: 0; }
+  .node-info h3 { font-size: 15.5px; font-weight: 700; margin-bottom: 3px; }
+  .node-info .node-sub { font-size: 12.5px; color: var(--text-dim); }
+
+  .status-pill {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 100px;
+    flex-shrink: 0;
+  }
+  .status-pill.published { background: color-mix(in srgb, var(--free) 16%, transparent); color: var(--free); }
+  .status-pill.draft { background: var(--surface-2); color: var(--text-dim); }
+
+  .row-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+  .class-children {
+    display: none;
+    border-top: 1px solid var(--border);
+    padding: 14px 18px 18px 40px;
+    background: color-mix(in srgb, var(--surface-2) 40%, transparent);
+  }
+
+  .class-node.expanded .class-children { display: block; }
+
+  .lesson-node { margin-bottom: 10px; }
+
+  .lesson-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+  }
+
+  .lesson-order-badge {
+    width: 26px; height: 26px;
+    border-radius: 7px;
+    background: var(--surface-2);
+    color: var(--text-dim);
+    font-size: 12px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .lesson-children {
+    display: none;
+    padding: 10px 10px 4px 30px;
+  }
+
+  .lesson-node.expanded .lesson-children { display: block; }
+
+  .session-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    margin-bottom: 8px;
+    font-size: 13.5px;
+  }
+
+  .session-type-icon { font-size: 15px; flex-shrink: 0; }
+  .session-row .node-info h4 { font-size: 14px; font-weight: 700; }
+  .session-row .node-sub { font-size: 11.5px; color: var(--text-dim); }
+
+  .add-child-btn {
+    width: 100%;
+    padding: 10px;
+    border: 1px dashed var(--border);
+    border-radius: 9px;
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    margin-top: 6px;
+  }
+
+  .add-child-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ============ MODAL / FORM PANEL ============ */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 100;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 40px 16px;
+    overflow-y: auto;
+  }
+
+  .modal-overlay.show { display: flex; }
+
+  .modal-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    width: min(100%, 560px);
+    padding: 26px;
+  }
+
+  .modal-box h2 { font-size: 19px; font-weight: 800; margin-bottom: 18px; }
+
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+  .field label { font-size: 13px; font-weight: 700; }
+  .field .hint { font-size: 11.5px; color: var(--text-dim); }
+
+  .field input,
+  .field textarea,
+  .field select {
+    width: 100%;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+    border-radius: 9px;
+    padding: 10px 12px;
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+  }
+
+  .field input:focus, .field textarea:focus, .field select:focus { border-color: var(--accent); }
+  .field textarea { resize: vertical; min-height: 70px; }
+
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 480px) { .field-row { grid-template-columns: 1fr; } }
+
+  /* ============ قسم "الموقع" (إعدادات من أنا / تواصل) ============ */
+  .settings-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px;
+    margin-bottom: 20px;
+  }
+
+  .settings-card h2 { font-size: 16.5px; font-weight: 800; margin-bottom: 4px; }
+  .settings-card > p.settings-sub { color: var(--text-dim); font-size: 12.5px; margin-bottom: 18px; }
+
+  .photo-preview-row { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+  .photo-preview {
+    width: 56px; height: 56px; border-radius: 50%; flex-shrink: 0;
+    background: var(--surface-2); border: 1px solid var(--border);
+    overflow: hidden; display: flex; align-items: center; justify-content: center;
+    font-weight: 800; color: var(--text-dim);
+  }
+  .photo-preview img { width: 100%; height: 100%; object-fit: cover; }
+
+  .stat-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 32px;
+    gap: 8px;
+    margin-bottom: 8px;
+    align-items: center;
+  }
+  .stat-row input { font-size: 13px; padding: 8px 10px; }
+
+  .settings-save-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .checkbox-row { display: flex; align-items: center; gap: 8px; }
+  .checkbox-row input { width: auto; }
+
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 20px;
+  }
+
+  .video-row {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 10px;
+    position: relative;
+  }
+
+  .video-row-top {
+    display: grid;
+    grid-template-columns: 2fr 80px 32px;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .video-row input { font-size: 13px; padding: 8px 10px; }
+
+  .remove-row-btn {
+    width: 30px; height: 30px;
+    border-radius: 7px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--live);
+    cursor: pointer;
+    font-size: 14px;
+  }
+
+  .video-upload {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 9px;
+  }
+
+  .video-pick-btn {
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 8px 13px;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .video-pick-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .video-pick-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+  .video-filename {
+    font-size: 12px;
+    color: var(--text-dim);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 150px;
+  }
+
+  .video-progress-wrap {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 130px;
+  }
+
+  .video-progress-track {
+    flex: 1;
+    height: 6px;
+    border-radius: 100px;
+    background: var(--surface-2);
+    overflow: hidden;
+  }
+
+  .video-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--accent);
+    transition: width 0.15s ease;
+  }
+
+  .video-progress-pct { font-size: 11px; color: var(--text-dim); white-space: nowrap; }
+
+  .video-status { font-size: 12px; font-weight: 700; white-space: nowrap; }
+  .video-status.ready { color: var(--free); }
+  .video-status.error { color: var(--live); }
+  .video-status.uploading { color: var(--accent); }
+
+  .existing-videos-note {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 10px 12px;
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.8;
+    margin-bottom: 12px;
+  }
+
+  .form-msg {
+    display: none;
+    padding: 10px 12px;
+    border-radius: 9px;
+    font-size: 13px;
+    margin-bottom: 14px;
+  }
+  .form-msg.show { display: block; }
+  .form-msg.error {
+    background: color-mix(in srgb, var(--live) 10%, var(--surface));
+    border: 1px solid color-mix(in srgb, var(--live) 35%, var(--border));
+  }
+  .form-msg.success {
+    background: color-mix(in srgb, var(--free) 12%, var(--surface));
+    border: 1px solid color-mix(in srgb, var(--free) 35%, var(--border));
+  }
+
+  /* ============ TOAST ============ */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 20px;
+    font-size: 13.5px;
+    font-weight: 600;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.2s ease;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.error { border-color: color-mix(in srgb, var(--live) 40%, var(--border)); color: var(--live); }
+  .toast.success { border-color: color-mix(in srgb, var(--free) 40%, var(--border)); color: var(--free); }
+  /* ============ ORDERS TABLE ============ */
+  .orders-filter {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+  }
+
+  .orders-table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .orders-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+  }
+
+  .orders-table th {
+    text-align: right;
+    padding: 12px 16px;
+    background: var(--surface-2);
+    color: var(--text-dim);
+    font-weight: 700;
+    font-size: 12.5px;
+    white-space: nowrap;
+  }
+
+  .orders-table td {
+    padding: 13px 16px;
+    border-top: 1px solid var(--border);
+    vertical-align: middle;
+  }
+
+  .orders-table .student-cell strong { display: block; font-size: 13.5px; }
+  .orders-table .student-cell span { font-size: 11.5px; color: var(--text-dim); }
+
+  .order-status-pill {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 100px;
+    white-space: nowrap;
+  }
+  .order-status-pill.pending { background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent); }
+  .order-status-pill.paid { background: color-mix(in srgb, var(--free) 16%, transparent); color: var(--free); }
+  .order-status-pill.rejected, .order-status-pill.failed { background: color-mix(in srgb, var(--live) 14%, transparent); color: var(--live); }
+
+  .orders-table .actions-cell { display: flex; gap: 6px; white-space: nowrap; }
+
+  @media (max-width: 760px) {
+    .orders-table-wrap { overflow-x: auto; }
+    .orders-table { min-width: 640px; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="bg-decor"><div class="glow"></div></div>
+
+  <nav>
+    <div class="brand">
+      <span class="brand-mark">أ</span>
+      <span>لوحة التحكم</span>
+    </div>
+    <div class="nav-links">
+      <a href="home.html" data-i18n="navHome">الرئيسية</a>
+      <a href="classes.html" data-i18n="navClasses">الكورسات</a>
+      <a href="about.html" data-i18n="navAbout">من أنا</a>
+      <a href="contact.html" class="active" data-i18n="navContact">تواصل</a>
+    </div>
+    <div class="nav-right">
+      
+      <button class="icon-btn" id="langToggle" title="تغيير اللغة">EN</button>
+      <button class="icon-btn" id="themeToggle" title="تبديل الوضع">🌙</button>
+    </div>
+  </nav>
+
+  <div class="wrap">
+    <div class="dash-shell">
+
+      <!-- ============ SIDEBAR ============ -->
+      <aside class="sidebar">
+        <button class="side-link active" data-view="courses">📚 الكورسات</button>
+        <button class="side-link" data-view="orders">🧾 الطلبات</button>
+        <button class="side-link" data-view="site">🌐 الموقع</button>
+        <button class="side-link soon" disabled>👥 المستخدمين <span class="badge-soon">قريباً</span></button>
+      </aside>
+
+      <!-- ============ MAIN ============ -->
+      <main>
+
+        <!-- ============ VIEW: COURSES ============ -->
+        <section class="dash-view active" id="view-courses">
+          <div class="view-header">
+            <div>
+              <h1>الكورسات</h1>
+              <p>الكورسات المنشورة فقط بتظهر هنا حالياً.</p>
+            </div>
+            <button class="btn-primary" onclick="openClassModal()">+ كورس جديد</button>
+          </div>
+
+          <div id="classesTree">
+            <!-- الشجرة بتتحط هنا -->
+          </div>
+        </section>
+
+        <!-- ============ VIEW: ORDERS ============ -->
+        <section class="dash-view" id="view-orders">
+          <div class="view-header">
+            <div>
+              <h1>الطلبات</h1>
+              <p>طلبات الاشتراك من كل الطلاب، مع إمكانية تأكيد أو رفض الطلبات المعلّقة.</p>
+            </div>
+          </div>
+
+          <div class="orders-filter" id="ordersFilter">
+            <button class="chip active" data-status="all">الكل</button>
+            <button class="chip" data-status="pending">معلّق</button>
+            <button class="chip" data-status="paid">مؤكد</button>
+            <button class="chip" data-status="rejected">مرفوض</button>
+            <button class="chip" data-status="failed">فشل</button>
+          </div>
+
+          <div class="orders-table-wrap">
+            <table class="orders-table">
+              <thead>
+                <tr>
+                  <th>الطالب</th>
+                  <th>الحصة</th>
+                  <th>المبلغ</th>
+                  <th>الحالة</th>
+                  <th>التاريخ</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="ordersTableBody">
+                <!-- صفوف الطلبات بتتحط هنا -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- ============ VIEW: SITE SETTINGS (من أنا / تواصل) ============ -->
+        <section class="dash-view" id="view-site">
+          <div class="view-header">
+            <div>
+              <h1>الموقع</h1>
+              <p>محتوى صفحتَي "من أنا" و"تواصل معنا" اللي بتظهر للطلاب.</p>
+            </div>
+          </div>
+
+          <div class="form-msg" id="siteSettingsMsg"></div>
+
+          <div class="settings-card">
+            <h2>من أنا</h2>
+            <p class="settings-sub">النص والصورة والإحصائيات اللي بتظهر في صفحة "من أنا".</p>
+
+            <div class="field">
+              <label for="aboutPhotoUrl">رابط الصورة الشخصية</label>
+              <div class="photo-preview-row">
+                <div class="photo-preview" id="aboutPhotoPreview">أ</div>
+                <input type="text" id="aboutPhotoUrl" placeholder="https://..." style="flex:1;" />
+              </div>
+              <div class="hint">حط رابط صورة مرفوعة على أي مكان (imgur, drive عام، إلخ) — مفيش رفع مباشر من هنا حالياً.</div>
+            </div>
+
+            <div class="field">
+              <label for="aboutBioInput">النبذة التعريفية</label>
+              <textarea id="aboutBioInput" style="min-height:130px;" placeholder="اكتب نبذة عن نفسك، خبرتك، وأسلوبك في التدريس..."></textarea>
+            </div>
+
+            <div class="field">
+              <label>الإحصائيات (زي "8 سنين خبرة"، "+1200 طالب")</label>
+              <div id="aboutStatsRows"></div>
+              <button type="button" class="add-child-btn" onclick="addStatRow()">+ إضافة إحصائية</button>
+            </div>
+          </div>
+
+          <div class="settings-card">
+            <h2>تواصل معنا</h2>
+            <p class="settings-sub">أي حقل تسيبه فاضي مش هيظهر في صفحة "تواصل معنا".</p>
+
+            <div class="field-row">
+              <div class="field">
+                <label for="contactWhatsapp">واتساب (بصيغة دولية زي 201119103460)</label>
+                <input type="text" id="contactWhatsapp" dir="ltr" placeholder="201119103460" />
+              </div>
+              <div class="field">
+                <label for="contactPhone">تليفون</label>
+                <input type="text" id="contactPhone" dir="ltr" placeholder="01xxxxxxxxx" />
+              </div>
+            </div>
+
+            <div class="field-row">
+              <div class="field">
+                <label for="contactEmail">إيميل</label>
+                <input type="email" id="contactEmail" dir="ltr" placeholder="name@example.com" />
+              </div>
+              <div class="field">
+                <label for="contactFacebook">رابط فيسبوك</label>
+                <input type="text" id="contactFacebook" dir="ltr" placeholder="https://facebook.com/..." />
+              </div>
+            </div>
+
+            <div class="field-row">
+              <div class="field">
+                <label for="contactInstagram">رابط إنستجرام</label>
+                <input type="text" id="contactInstagram" dir="ltr" placeholder="https://instagram.com/..." />
+              </div>
+              <div class="field">
+                <label for="contactYoutube">رابط يوتيوب</label>
+                <input type="text" id="contactYoutube" dir="ltr" placeholder="https://youtube.com/..." />
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="contactTiktok">رابط تيك توك</label>
+              <input type="text" id="contactTiktok" dir="ltr" placeholder="https://tiktok.com/@..." />
+            </div>
+          </div>
+
+          <div class="settings-save-bar">
+            <button class="btn-primary" id="saveSettingsBtn" onclick="saveSiteSettings()">حفظ التغييرات</button>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ============ MODAL: CLASS ============ -->
+  <div class="modal-overlay" id="classModalOverlay">
+    <div class="modal-box">
+      <h2 id="classModalTitle">كورس جديد</h2>
+      <div class="form-msg" id="classFormMsg"></div>
+      <form id="classForm">
+        <input type="hidden" id="classId" />
+        <div class="field">
+          <label for="classTitle">عنوان الكورس</label>
+          <input id="classTitle" type="text" required />
+        </div>
+        <div class="field">
+          <label for="classDescription">الوصف</label>
+          <textarea id="classDescription"></textarea>
+        </div>
+        <div class="field">
+          <label for="classThumbnail">رابط صورة الغلاف (اختياري)</label>
+          <input id="classThumbnail" type="text" placeholder="https://..." />
+        </div>
+        <div class="field checkbox-row" id="publishedRow" style="display:none;">
+          <input type="checkbox" id="classPublished" />
+          <label for="classPublished" style="margin:0;">منشور (ظاهر للطلاب)</label>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-outline" onclick="closeModal('classModalOverlay')">إلغاء</button>
+          <button type="submit" class="btn-primary">حفظ</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ MODAL: LESSON ============ -->
+  <div class="modal-overlay" id="lessonModalOverlay">
+    <div class="modal-box">
+      <h2 id="lessonModalTitle">درس جديد</h2>
+      <div class="form-msg" id="lessonFormMsg"></div>
+      <form id="lessonForm">
+        <input type="hidden" id="lessonId" />
+        <input type="hidden" id="lessonClassId" />
+        <div class="field">
+          <label for="lessonTitle">عنوان الدرس</label>
+          <input id="lessonTitle" type="text" required />
+        </div>
+        <div class="field">
+          <label for="lessonOrder">الترتيب</label>
+          <input id="lessonOrder" type="number" min="1" required />
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-outline" onclick="closeModal('lessonModalOverlay')">إلغاء</button>
+          <button type="submit" class="btn-primary">حفظ</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ MODAL: SESSION ============ -->
+  <div class="modal-overlay" id="sessionModalOverlay">
+    <div class="modal-box">
+      <h2 id="sessionModalTitle">حصة جديدة</h2>
+      <div class="form-msg" id="sessionFormMsg"></div>
+      <form id="sessionForm">
+        <input type="hidden" id="sessionId" />
+        <input type="hidden" id="sessionLessonId" />
+
+        <div class="field">
+          <label for="sessionTitle">عنوان الحصة</label>
+          <input id="sessionTitle" type="text" required />
+        </div>
+
+        <div class="field">
+          <label for="sessionDescription">الوصف (اختياري)</label>
+          <textarea id="sessionDescription"></textarea>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="sessionType">النوع</label>
+            <select id="sessionType">
+              <option value="recorded">مسجّلة</option>
+              <option value="live">لايف</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="sessionOrder">الترتيب</label>
+            <input id="sessionOrder" type="number" min="1" required />
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="sessionAccessType">نوع الوصول</label>
+            <select id="sessionAccessType">
+              <option value="paid">مدفوعة</option>
+              <option value="free">مجانية</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="sessionPrice">السعر (ج.م)</label>
+            <input id="sessionPrice" type="number" min="0" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="sessionAccessDurationDays">مدة الوصول بالأيام (اتركها فاضية = بدون حد أقصى)</label>
+          <input id="sessionAccessDurationDays" type="number" min="1" />
+        </div>
+
+        <!-- ============ حقول خاصة بالحصص اللايف ============ -->
+        <div id="liveFields" style="display:none;">
+          <div class="field-row">
+            <div class="field">
+              <label for="sessionScheduledAt">موعد الحصة</label>
+              <input id="sessionScheduledAt" type="datetime-local" />
+            </div>
+            <div class="field">
+              <label for="sessionMeetingUrl">رابط الحصة</label>
+              <input id="sessionMeetingUrl" type="text" placeholder="https://..." />
+            </div>
+          </div>
+        </div>
+
+        <!-- ============ حقول خاصة بالحصص المسجّلة (فيديوهات) ============ -->
+        <div id="recordedFields">
+          <div class="field" id="existingVideosBlock" style="display:none;">
+            <label>الفيديوهات الحالية</label>
+            <div class="existing-videos-note">
+              تقدر تعدّل العنوان أو الترتيب، أو تمسح فيديو بالكامل من الحصة. الملف الفعلي على Bunny (videoId) مش بيتغيّر من هنا لأسباب أمنية.
+            </div>
+            <div id="existingVideosList"></div>
+          </div>
+
+          <div class="field">
+            <label id="videosLabel">الفيديوهات (لازم واحد على الأقل للحصة الجديدة)</label>
+            <div id="videoRows"></div>
+            <button type="button" class="add-child-btn" onclick="addVideoRow()">+ إضافة صف فيديو</button>
+            <div class="hint" style="margin-top:6px;">
+              دوس "اختار فيديو" وارفعه — الفيديو بيتربط بالحصة على طول (من أول ما Bunny يدّينا الرقم بتاعه)، مش لازم تستنى الرفع يخلص بالكامل عشان تحفظ.
+            </div>
+          </div>
+        </div>
+
+        <!-- ============ PDF الحصة ============
+             ملحوظة: مؤقتاً رابط مباشر بتكتبه إنت. رفع بالسحب والإفلات
+             على Cloudinary هيتضاف قريباً بدل الحقل ده من غير ما يتغيّر
+             شكل البيانات المتبعتة للسيرفر (لسه pdf.title / pdf.url). ============ -->
+        <div class="field-row">
+          <div class="field">
+            <label for="sessionPdfTitle">عنوان الـ PDF (اختياري)</label>
+            <input id="sessionPdfTitle" type="text" placeholder="مثال: ملخص الدرس" />
+          </div>
+          <div class="field">
+            <label for="sessionPdfUrl">رابط الـ PDF</label>
+            <input id="sessionPdfUrl" type="text" dir="ltr" placeholder="https://..." />
+          </div>
+        </div>
+        <div class="hint" style="margin:-8px 0 14px;">هنضيف رفع بالسحب والإفلات (Cloudinary) بدل الرابط اليدوي قريباً.</div>
+
+        <!-- ============ ASSIGNMENT ============ -->
+        <div class="field">
+          <label for="sessionAssignmentTitle">عنوان الواجب (اختياري)</label>
+          <input id="sessionAssignmentTitle" type="text" />
+        </div>
+        <div class="field">
+          <label for="sessionAssignmentDescription">وصف الواجب</label>
+          <textarea id="sessionAssignmentDescription"></textarea>
+        </div>
+        <div class="field">
+          <label for="sessionAssignmentPdfUrl">رابط PDF الواجب</label>
+          <input id="sessionAssignmentPdfUrl" type="text" dir="ltr" placeholder="https://..." />
+        </div>
+
+        <!-- ============ PUBLISH ============ -->
+        <div class="field checkbox-row">
+          <input type="checkbox" id="sessionPublished" checked />
+          <label for="sessionPublished" style="margin:0;">منشورة (ظاهرة للطلاب)</label>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-outline" onclick="cancelSessionModal()">إلغاء</button>
+          <button type="submit" class="btn-primary">حفظ</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="shared/app.js"></script>
+  <script>
+    /* =====================================================
+       أدوات عامة صغيرة
+       ===================================================== */
+    function toast(msg, type = "") {
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.className = `toast show ${type}`;
+      setTimeout(() => el.classList.remove("show"), 3000);
+    }
+
+    function esc(str) {
+      const div = document.createElement("div");
+      div.textContent = str ?? "";
+      return div.innerHTML;
+    }
+
+    function openModal(id) { document.getElementById(id).classList.add("show"); }
+    function closeModal(id) { document.getElementById(id).classList.remove("show"); }
+
+    function showFormMsg(elId, msg, type) {
+      const el = document.getElementById(elId);
+      el.textContent = msg;
+      el.className = `form-msg show ${type}`;
+    }
+    function hideFormMsg(elId) {
+      document.getElementById(elId).className = "form-msg";
+    }
+
+    async function api(path, options = {}) {
+      const res = await fetch(path, { credentials: "include", ...options });
+      let data = {};
+      try { data = await res.json(); } catch (e) {}
+      if (!res.ok) throw new Error(data.message || `HTTP ${res.status}`);
+      return data;
+    }
+
+    /* =====================================================
+       التنقل بين أقسام السايدبار
+       ===================================================== */
+    document.querySelectorAll(".side-link[data-view]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".side-link[data-view]").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        document.querySelectorAll(".dash-view").forEach((v) => v.classList.remove("active"));
+        document.getElementById(`view-${btn.dataset.view}`).classList.add("active");
+      });
+    });
+
+    /* =====================================================
+       ============ قسم الكورسات ============
+       ===================================================== */
+    let classesCache = [];
+    let lessonsCache = {};   // classId -> [lessons]
+    let sessionsCache = {};  // lessonId -> [sessions]
+
+    async function loadClasses() {
+      const tree = document.getElementById("classesTree");
+      tree.innerHTML = `<div class="empty-state"><div class="icon">⏳</div><p>بيتم التحميل...</p></div>`;
+
+      try {
+        const data = await api("/classes");
+        classesCache = data.classes || [];
+
+        if (!classesCache.length) {
+          tree.innerHTML = `<div class="empty-state"><div class="icon">📭</div><h3 style="color:var(--text);margin-bottom:6px;">مفيش كورسات لسه</h3><p>ابدأ بإضافة كورس جديد.</p></div>`;
+          return;
+        }
+
+        tree.innerHTML = classesCache.map(classNodeTemplate).join("");
+      } catch (err) {
+        tree.innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><h3 style="color:var(--text);margin-bottom:6px;">معرفناش نجيب الكورسات</h3><p>${esc(err.message)}</p></div>`;
+      }
+    }
+
+    function classNodeTemplate(cls) {
+      const thumb = cls.thumbnail
+        ? `<img src="${esc(cls.thumbnail)}" alt="" />`
+        : (cls.title || "?").trim().charAt(0);
+
+      return `
+        <div class="class-node" id="class-node-${cls._id}">
+          <div class="class-row" onclick="toggleClass('${cls._id}')">
+            <div class="expand-icon">▶</div>
+            <div class="node-thumb">${thumb}</div>
+            <div class="node-info">
+              <h3>${esc(cls.title)}</h3>
+              <div class="node-sub">📖 ${cls.lessonsCount ?? 0} درس · 🎥 ${cls.sessionsCount ?? 0} حصة</div>
+            </div>
+            <span class="status-pill ${cls.isPublished ? "published" : "draft"}">${cls.isPublished ? "منشور" : "مسودة"}</span>
+            <div class="row-actions" onclick="event.stopPropagation()">
+              <button class="btn-outline btn-sm" onclick="openClassModal('${cls._id}')">تعديل</button>
+              <button class="btn-danger btn-sm" onclick="deleteClass('${cls._id}', '${esc(cls.title)}')">حذف</button>
+            </div>
+          </div>
+          <div class="class-children" id="class-children-${cls._id}">
+            <!-- الدروس بتتحط هنا لما تتفتح -->
+          </div>
+        </div>
+      `;
+    }
+
+    async function toggleClass(classId) {
+      const node = document.getElementById(`class-node-${classId}`);
+      const willExpand = !node.classList.contains("expanded");
+      node.classList.toggle("expanded");
+      if (willExpand) await loadLessons(classId);
+    }
+
+    async function loadLessons(classId) {
+      const container = document.getElementById(`class-children-${classId}`);
+      container.innerHTML = `<p style="color:var(--text-dim);font-size:13px;">بيتم التحميل...</p>`;
+
+      try {
+        const data = await api(`/classes/${classId}/lessons`);
+        lessonsCache[classId] = data.lessons || [];
+        renderLessons(classId);
+      } catch (err) {
+        container.innerHTML = `<p style="color:var(--live);font-size:13px;">معرفناش نجيب الدروس: ${esc(err.message)}</p>`;
+      }
+    }
+
+    function renderLessons(classId) {
+      const container = document.getElementById(`class-children-${classId}`);
+      const lessons = lessonsCache[classId] || [];
+
+      const rows = lessons.map((l) => lessonNodeTemplate(l, classId)).join("");
+      container.innerHTML = `
+        ${rows || `<p style="color:var(--text-dim);font-size:13px;margin-bottom:8px;">مفيش دروس لسه.</p>`}
+        <button class="add-child-btn" onclick="openLessonModal('${classId}')">+ إضافة درس</button>
+      `;
+    }
+
+    function lessonNodeTemplate(lesson, classId) {
+      return `
+        <div class="lesson-node" id="lesson-node-${lesson._id}">
+          <div class="lesson-row" onclick="toggleLesson('${lesson._id}')">
+            <div class="expand-icon">▶</div>
+            <div class="lesson-order-badge">${lesson.order}</div>
+            <div class="node-info"><h3 style="font-size:14px;">${esc(lesson.title)}</h3></div>
+            <div class="row-actions" onclick="event.stopPropagation()">
+              <button class="btn-outline btn-sm" onclick="openLessonModal('${classId}', '${lesson._id}')">تعديل</button>
+              <button class="btn-danger btn-sm" onclick="deleteLesson('${lesson._id}', '${classId}', '${esc(lesson.title)}')">حذف</button>
+            </div>
+          </div>
+          <div class="lesson-children" id="lesson-children-${lesson._id}"></div>
+        </div>
+      `;
+    }
+
+    async function toggleLesson(lessonId) {
+      const node = document.getElementById(`lesson-node-${lessonId}`);
+      const willExpand = !node.classList.contains("expanded");
+      node.classList.toggle("expanded");
+      if (willExpand) await loadSessions(lessonId);
+    }
+
+    async function loadSessions(lessonId) {
+      const container = document.getElementById(`lesson-children-${lessonId}`);
+      container.innerHTML = `<p style="color:var(--text-dim);font-size:12.5px;">بيتم التحميل...</p>`;
+
+      try {
+        const data = await api(`/lessons/${lessonId}/sessions`);
+        sessionsCache[lessonId] = data.sessions || [];
+        renderSessions(lessonId);
+      } catch (err) {
+        container.innerHTML = `<p style="color:var(--live);font-size:12.5px;">معرفناش نجيب الحصص: ${esc(err.message)}</p>`;
+      }
+    }
+
+    function renderSessions(lessonId) {
+      const container = document.getElementById(`lesson-children-${lessonId}`);
+      const sessions = sessionsCache[lessonId] || [];
+
+      const rows = sessions.map((s) => sessionRowTemplate(s, lessonId)).join("");
+      container.innerHTML = `
+        ${rows || `<p style="color:var(--text-dim);font-size:12.5px;margin-bottom:8px;">مفيش حصص لسه.</p>`}
+        <button class="add-child-btn" onclick="openSessionModal('${lessonId}')">+ إضافة حصة</button>
+      `;
+    }
+
+    function sessionRowTemplate(s, lessonId) {
+      const icon = s.type === "live" ? "🔴" : "🎥";
+      const priceLabel = s.accessType === "free" ? "مجانية" : `${s.price} ج.م`;
+
+      return `
+        <div class="session-row">
+          <span class="session-type-icon">${icon}</span>
+          <div class="node-info">
+            <h4>${esc(s.title)}</h4>
+            <div class="node-sub">${s.type === "live" ? "لايف" : "مسجّلة"} · ${priceLabel}${s.isPublished === false ? " · <span style=\"color:var(--text-dim)\">مسودة</span>" : ""}</div>
+          </div>
+          <div class="row-actions">
+            <button class="btn-outline btn-sm" onclick="openSessionModal('${lessonId}', '${s._id}')">تعديل</button>
+            <button class="btn-danger btn-sm" onclick="deleteSession('${s._id}', '${lessonId}', '${esc(s.title)}')">حذف</button>
+          </div>
+        </div>
+      `;
+    }
+
+    /* =====================================================
+       ============ نموذج الكورس (Class) ============
+       ===================================================== */
+    function openClassModal(classId) {
+      hideFormMsg("classFormMsg");
+      document.getElementById("classForm").reset();
+      document.getElementById("classId").value = classId || "";
+
+      const publishedRow = document.getElementById("publishedRow");
+
+      if (classId) {
+        const cls = classesCache.find((c) => c._id === classId);
+        document.getElementById("classModalTitle").textContent = "تعديل الكورس";
+        document.getElementById("classTitle").value = cls?.title || "";
+        document.getElementById("classDescription").value = cls?.description || "";
+        document.getElementById("classThumbnail").value = cls?.thumbnail || "";
+        document.getElementById("classPublished").checked = !!cls?.isPublished;
+        publishedRow.style.display = "flex";
+      } else {
+        document.getElementById("classModalTitle").textContent = "كورس جديد";
+        publishedRow.style.display = "none";
+      }
+
+      openModal("classModalOverlay");
+    }
+
+    document.getElementById("classForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      hideFormMsg("classFormMsg");
+
+      const classId = document.getElementById("classId").value;
+      const payload = {
+        title: document.getElementById("classTitle").value.trim(),
+        description: document.getElementById("classDescription").value.trim(),
+        thumbnail: document.getElementById("classThumbnail").value.trim(),
+      };
+
+      if (classId) {
+        payload.isPublished = document.getElementById("classPublished").checked;
+      }
+
+      try {
+        if (classId) {
+          await api(`/classes/${classId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          toast("اتحدّث الكورس بنجاح", "success");
+        } else {
+          await api("/classes", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          toast("اتضاف الكورس بنجاح", "success");
+        }
+        closeModal("classModalOverlay");
+        loadClasses();
+      } catch (err) {
+        showFormMsg("classFormMsg", err.message, "error");
+      }
+    });
+
+    async function deleteClass(classId, title) {
+      if (!confirm(`متأكد إنك عايز تمسح "${title}"؟ هيتمسح كل الدروس والحصص اللي جواه.`)) return;
+      try {
+        await api(`/classes/${classId}`, { method: "DELETE" });
+        toast("اتمسح الكورس", "success");
+        loadClasses();
+      } catch (err) {
+        toast(err.message, "error");
+      }
+    }
+
+    /* =====================================================
+       ============ نموذج الدرس (Lesson) ============
+       ===================================================== */
+    function openLessonModal(classId, lessonId) {
+      hideFormMsg("lessonFormMsg");
+      document.getElementById("lessonForm").reset();
+      document.getElementById("lessonClassId").value = classId;
+      document.getElementById("lessonId").value = lessonId || "";
+
+      if (lessonId) {
+        const lesson = (lessonsCache[classId] || []).find((l) => l._id === lessonId);
+        document.getElementById("lessonModalTitle").textContent = "تعديل الدرس";
+        document.getElementById("lessonTitle").value = lesson?.title || "";
+        document.getElementById("lessonOrder").value = lesson?.order || "";
+      } else {
+        document.getElementById("lessonModalTitle").textContent = "درس جديد";
+        const existingCount = (lessonsCache[classId] || []).length;
+        document.getElementById("lessonOrder").value = existingCount + 1;
+      }
+
+      openModal("lessonModalOverlay");
+    }
+
+    document.getElementById("lessonForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      hideFormMsg("lessonFormMsg");
+
+      const classId = document.getElementById("lessonClassId").value;
+      const lessonId = document.getElementById("lessonId").value;
+      const payload = {
+        title: document.getElementById("lessonTitle").value.trim(),
+        order: parseInt(document.getElementById("lessonOrder").value, 10),
+      };
+
+      try {
+        if (lessonId) {
+          await api(`/lessons/${lessonId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          toast("اتحدّث الدرس بنجاح", "success");
+        } else {
+          await api(`/classes/${classId}/lessons`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          toast("اتضاف الدرس بنجاح", "success");
+        }
+        closeModal("lessonModalOverlay");
+        await loadLessons(classId);
+        // نحدّث عدد الدروس في كارت الكلاس كمان
+        loadClasses();
+      } catch (err) {
+        showFormMsg("lessonFormMsg", err.message, "error");
+      }
+    });
+
+    async function deleteLesson(lessonId, classId, title) {
+      if (!confirm(`متأكد إنك عايز تمسح "${title}"؟ هيتمسح كل الحصص اللي جواه.`)) return;
+      try {
+        await api(`/lessons/${lessonId}`, { method: "DELETE" });
+        toast("اتمسح الدرس", "success");
+        await loadLessons(classId);
+        loadClasses();
+      } catch (err) {
+        toast(err.message, "error");
+      }
+    }
+
+    /* =====================================================
+       ============ نموذج الحصة (Session) ============
+       ===================================================== */
+    let removedVideoIds = []; // فيديوهات موجودة اتعلّمت للحذف وقت التعديل (بتتبعت مع الحفظ)
+
+    document.getElementById("sessionType").addEventListener("change", updateSessionFieldsVisibility);
+    function updateSessionFieldsVisibility() {
+      const type = document.getElementById("sessionType").value;
+      document.getElementById("liveFields").style.display = type === "live" ? "block" : "none";
+      document.getElementById("recordedFields").style.display = type === "recorded" ? "block" : "none";
+    }
+
+    function renderExistingVideoRow(video) {
+      const wrap = document.getElementById("existingVideosList");
+      const rowId = `existing-video-${video._id}`;
+      const div = document.createElement("div");
+      div.className = "video-row existing-video-row";
+      div.id = rowId;
+      div.dataset.existingId = video._id;
+      div.innerHTML = `
+        <div class="video-row-top">
+          <input type="text" placeholder="عنوان الفيديو" class="v-title" value="${esc(video.title)}" />
+          <input type="number" placeholder="ترتيب" class="v-order" min="1" value="${esc(video.order)}" />
+          <button type="button" class="remove-row-btn" onclick="removeExistingVideoRow('${rowId}', '${video._id}')">✕</button>
+        </div>
+      `;
+      wrap.appendChild(div);
+    }
+
+    function removeExistingVideoRow(rowId, videoDbId) {
+      if (!confirm("متأكد إنك عايز تمسح الفيديو ده من الحصة؟ هيتنفّذ فور ما تحفظ.")) return;
+      removedVideoIds.push(videoDbId);
+      const row = document.getElementById(rowId);
+      if (row) row.remove();
+    }
+
+    async function loadExistingVideos(sessionId) {
+      const listEl = document.getElementById("existingVideosList");
+      listEl.innerHTML = `<div class="hint">بيتحمّل...</div>`;
+      try {
+        const data = await api(`/sessions/${sessionId}/videos`);
+        listEl.innerHTML = "";
+        (data.videos || []).forEach(renderExistingVideoRow);
+      } catch (err) {
+        listEl.innerHTML = `<div class="hint">تعذّر تحميل الفيديوهات الحالية: ${esc(err.message)}</div>`;
+      }
+    }
+
+    function addVideoRow(video = { title: "", order: "" }) {
+      const wrap = document.getElementById("videoRows");
+      const rowId = `video-row-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      const div = document.createElement("div");
+      div.className = "video-row";
+      div.id = rowId;
+      div.dataset.videoId = "";
+      div.innerHTML = `
+        <div class="video-row-top">
+          <input type="text" placeholder="عنوان الفيديو" class="v-title" value="${esc(video.title)}" />
+          <input type="number" placeholder="ترتيب" class="v-order" min="1" value="${esc(video.order)}" />
+          <button type="button" class="remove-row-btn" onclick="removeVideoRow('${rowId}')">✕</button>
+        </div>
+        <div class="video-upload">
+          <input type="file" accept="video/*" class="video-file-input" hidden />
+          <button type="button" class="video-pick-btn">📹 اختار فيديو</button>
+          <span class="video-filename"></span>
+          <div class="video-progress-wrap">
+            <div class="video-progress-track"><div class="video-progress-fill"></div></div>
+            <span class="video-progress-pct">0%</span>
+          </div>
+          <span class="video-status"></span>
+        </div>
+      `;
+      wrap.appendChild(div);
+
+      const fileInput = div.querySelector(".video-file-input");
+      const pickBtn = div.querySelector(".video-pick-btn");
+      pickBtn.addEventListener("click", () => fileInput.click());
+      fileInput.addEventListener("change", () => {
+        if (fileInput.files[0]) startVideoUpload(div, fileInput.files[0]);
+      });
+    }
+
+    function removeVideoRow(rowId) {
+      const row = document.getElementById(rowId);
+      if (!row) return;
+      // لو فيه رفع شغال في الخلفية، نلغيه عشان منسيبش رفع مش هيتستخدم
+      if (row.uploadInstance) {
+        try { row.uploadInstance.abort(); } catch (err) {}
+      }
+      row.remove();
+    }
+
+    // عدّاد فترة "تجهيز" الفيديو بس (نداء init-upload اللي بيرجّع
+    // الـ videoId من Bunny) — ثانية أو اتنين. مش محتاجين نستنى
+    // الرفع الفعلي للبايتات يخلص عشان نقدر نحفظ الحصة؛ الرفع ده
+    // بيكمل في الخلفية لوحده بعد ما الـ videoId يترجع.
+    let pendingVideoInits = 0;
+    function setPendingInit(delta) {
+      pendingVideoInits = Math.max(0, pendingVideoInits + delta);
+      const submitBtn = document.querySelector('#sessionForm button[type="submit"]');
+      if (submitBtn) {
+        submitBtn.disabled = pendingVideoInits > 0;
+        submitBtn.textContent = pendingVideoInits > 0 ? "بيجهّز الفيديو..." : "حفظ";
+      }
+    }
+
+    async function startVideoUpload(row, file) {
+      const pickBtn = row.querySelector(".video-pick-btn");
+      const filenameEl = row.querySelector(".video-filename");
+      const progressWrap = row.querySelector(".video-progress-wrap");
+      const progressFill = row.querySelector(".video-progress-fill");
+      const progressPct = row.querySelector(".video-progress-pct");
+      const statusEl = row.querySelector(".video-status");
+
+      row.dataset.videoId = "";
+      filenameEl.textContent = file.name;
+      statusEl.textContent = "بيجهّز الرفع...";
+      statusEl.className = "video-status";
+      progressWrap.style.display = "none";
+      pickBtn.disabled = true;
+      setPendingInit(1);
+
+      const titleForBunny = row.querySelector(".v-title").value.trim() || file.name;
+
+      let creds;
+      try {
+        creds = await api("/videos/init-upload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title: titleForBunny }),
+        });
+      } catch (err) {
+        statusEl.textContent = "فشل تجهيز الرفع: " + err.message;
+        statusEl.className = "video-status error";
+        pickBtn.disabled = false;
+        setPendingInit(-1);
+        return;
+      }
+
+      // اللحظة اللي محتاجينها فعلاً: بمجرد ما Bunny يرجّع الـ videoId،
+      // نحفظه على طول جوه الصف — الحصة تقدر تتحفظ من دلوقتي، من غير
+      // ما تستنى رفع البايتات نفسها يخلص.
+      row.dataset.videoId = creds.videoId;
+      setPendingInit(-1);
+
+      statusEl.textContent = "🟡 بيرفع في الخلفية...";
+      statusEl.className = "video-status uploading";
+      progressWrap.style.display = "flex";
+      pickBtn.textContent = "🔁 استبدال الفيديو";
+      pickBtn.disabled = false;
+
+      const upload = new tus.Upload(file, {
+        endpoint: creds.tusEndpoint,
+        retryDelays: [0, 3000, 5000, 10000, 20000],
+        headers: {
+          AuthorizationSignature: creds.signature,
+          AuthorizationExpire: String(creds.expirationTime),
+          VideoId: creds.videoId,
+          LibraryId: String(creds.libraryId),
+        },
+        metadata: { filetype: file.type, title: titleForBunny },
+        onError: (error) => {
+          // الـ videoId فضل محفوظ عندنا في الصف عمداً — الحصة تقدر
+          // تتحفظ بيه، بس الفيديو نفسه لسه ما وصلش Bunny. نوريه
+          // بوضوح عشان يحاول يرفعه تاني قبل ما يعتمد على الحصة دي.
+          statusEl.textContent = "فشل الرفع الفعلي: " + (error.message || error) + " — جرّب تستبدل الفيديو";
+          statusEl.className = "video-status error";
+        },
+        onProgress: (bytesUploaded, bytesTotal) => {
+          const pct = ((bytesUploaded / bytesTotal) * 100).toFixed(0);
+          progressFill.style.width = pct + "%";
+          progressPct.textContent = pct + "%";
+        },
+        onSuccess: () => {
+          statusEl.textContent = "✅ اترفع بالكامل (لسه بيتجهّز على Bunny شوية دقايق)";
+          statusEl.className = "video-status ready";
+          progressWrap.style.display = "none";
+        },
+      });
+
+      row.uploadInstance = upload;
+      upload.findPreviousUploads().then((previousUploads) => {
+        if (previousUploads.length) upload.resumeFromPreviousUpload(previousUploads[0]);
+        upload.start();
+      });
+    }
+
+    function cancelSessionModal() {
+      document.querySelectorAll("#videoRows .video-row").forEach((row) => {
+        if (row.uploadInstance) {
+          try { row.uploadInstance.abort(); } catch (err) {}
+        }
+      });
+      pendingVideoInits = 0;
+      removedVideoIds = [];
+      closeModal("sessionModalOverlay");
+    }
+
+    function openSessionModal(lessonId, sessionId) {
+      hideFormMsg("sessionFormMsg");
+      document.getElementById("sessionForm").reset();
+      document.getElementById("sessionLessonId").value = lessonId;
+      document.getElementById("sessionId").value = sessionId || "";
+      document.getElementById("videoRows").innerHTML = "";
+      document.getElementById("existingVideosBlock").style.display = "none";
+      document.getElementById("existingVideosList").innerHTML = "";
+      pendingVideoInits = 0;
+      setPendingInit(0);
+      removedVideoIds = [];
+
+      if (sessionId) {
+        const s = (sessionsCache[lessonId] || []).find((x) => x._id === sessionId);
+        document.getElementById("sessionModalTitle").textContent = "تعديل الحصة";
+        document.getElementById("sessionTitle").value = s?.title || "";
+        document.getElementById("sessionDescription").value = s?.description || "";
+        document.getElementById("sessionType").value = s?.type || "recorded";
+        document.getElementById("sessionOrder").value = s?.order || "";
+        document.getElementById("sessionAccessType").value = s?.accessType || "paid";
+        document.getElementById("sessionPrice").value = s?.price || "";
+        document.getElementById("sessionAccessDurationDays").value = s?.accessDurationDays || "";
+
+        // PDF الحصة
+        document.getElementById("sessionPdfTitle").value = s?.pdf?.title || "";
+        document.getElementById("sessionPdfUrl").value = s?.pdf?.url || "";
+
+        // الواجب
+        document.getElementById("sessionAssignmentTitle").value = s?.assignment?.title || "";
+        document.getElementById("sessionAssignmentDescription").value = s?.assignment?.description || "";
+        document.getElementById("sessionAssignmentPdfUrl").value = s?.assignment?.pdfUrl || "";
+
+        // النشر — لو الحقل مش موجود في الداتا القديمة، نعتبرها منشورة افتراضياً
+        document.getElementById("sessionPublished").checked = s?.isPublished !== false;
+
+        if (s?.type === "recorded") {
+          document.getElementById("existingVideosBlock").style.display = "block";
+          loadExistingVideos(sessionId);
+        }
+
+        document.getElementById("videosLabel").textContent = "إضافة فيديوهات جديدة (اختياري)";
+      } else {
+        document.getElementById("sessionModalTitle").textContent = "حصة جديدة";
+        document.getElementById("sessionOrder").value = (sessionsCache[lessonId] || []).length + 1;
+        document.getElementById("videosLabel").textContent = "الفيديوهات (لازم واحد على الأقل)";
+
+        // ديفولت حصة جديدة: مفيش PDF/واجب، ومنشورة
+        document.getElementById("sessionPdfTitle").value = "";
+        document.getElementById("sessionPdfUrl").value = "";
+        document.getElementById("sessionAssignmentTitle").value = "";
+        document.getElementById("sessionAssignmentDescription").value = "";
+        document.getElementById("sessionAssignmentPdfUrl").value = "";
+        document.getElementById("sessionPublished").checked = true;
+
+        addVideoRow();
+      }
+
+      updateSessionFieldsVisibility();
+      openModal("sessionModalOverlay");
+    }
+
+    document.getElementById("sessionForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      hideFormMsg("sessionFormMsg");
+
+      const lessonId = document.getElementById("sessionLessonId").value;
+      const sessionId = document.getElementById("sessionId").value;
+      const type = document.getElementById("sessionType").value;
+
+      if (pendingVideoInits > 0) {
+        return showFormMsg("sessionFormMsg", "استنى لحظة، الفيديو لسه بيتجهّز", "error");
+      }
+
+      const rowEls = Array.from(document.querySelectorAll("#videoRows .video-row"));
+      const incompleteRow = rowEls.find((row) => {
+        const title = row.querySelector(".v-title").value.trim();
+        return title && !row.dataset.videoId;
+      });
+      if (incompleteRow) {
+        return showFormMsg("sessionFormMsg", "فيه صف فيديو لسه ما اترفعش بنجاح — ارفعه أو امسحه قبل الحفظ", "error");
+      }
+
+      const videoRows = rowEls.map((row) => ({
+        title: row.querySelector(".v-title").value.trim(),
+        videoId: row.dataset.videoId || "",
+        order: parseInt(row.querySelector(".v-order").value, 10) || 1,
+      })).filter((v) => v.title && v.videoId);
+
+      const basePayload = {
+        title: document.getElementById("sessionTitle").value.trim(),
+        description: document.getElementById("sessionDescription").value.trim(),
+        type,
+        accessType: document.getElementById("sessionAccessType").value,
+        price: parseFloat(document.getElementById("sessionPrice").value) || 0,
+        accessDurationDays: document.getElementById("sessionAccessDurationDays").value
+          ? parseInt(document.getElementById("sessionAccessDurationDays").value, 10)
+          : null,
+        order: parseInt(document.getElementById("sessionOrder").value, 10),
+        isPublished: document.getElementById("sessionPublished").checked,
+      };
+
+      // PDF — نبعته بس لو فيه رابط، وإلا نبعت null عشان لو المدرّس
+      // مسح الرابط يتشال pdf من الحصة فعلياً (مش بس يتجاهل)
+      const pdfTitle = document.getElementById("sessionPdfTitle").value.trim();
+      const pdfUrl = document.getElementById("sessionPdfUrl").value.trim();
+      basePayload.pdf = pdfUrl ? { title: pdfTitle, url: pdfUrl } : null;
+
+      // Assignment — نفس المنطق، بس نعتبره موجود لو فيه عنوان أو وصف أو رابط
+      const asgTitle = document.getElementById("sessionAssignmentTitle").value.trim();
+      const asgDescription = document.getElementById("sessionAssignmentDescription").value.trim();
+      const asgPdfUrl = document.getElementById("sessionAssignmentPdfUrl").value.trim();
+      basePayload.assignment = (asgTitle || asgDescription || asgPdfUrl)
+        ? { title: asgTitle, description: asgDescription, pdfUrl: asgPdfUrl }
+        : null;
+
+      if (type === "live") {
+        basePayload.scheduledAt = document.getElementById("sessionScheduledAt").value;
+        basePayload.meetingUrl = document.getElementById("sessionMeetingUrl").value.trim();
+      }
+
+      try {
+        if (sessionId) {
+          // بنجمع: الفيديوهات الموجودة اللي اتعدّل عنوانها/ترتيبها (معاها _id)
+          // + أي فيديوهات جديدة اترفعت (من غير _id) — نداء PUT واحد
+          // بيتكفّل بالإضافة والتعديل، وremoveVideoIds بيتكفّل بالحذف
+          const existingRows = Array.from(document.querySelectorAll("#existingVideosList .existing-video-row"));
+          const editedExisting = existingRows.map((row) => ({
+            _id: row.dataset.existingId,
+            title: row.querySelector(".v-title").value.trim(),
+            order: parseInt(row.querySelector(".v-order").value, 10) || 1,
+          }));
+
+          const combinedVideos = [...editedExisting, ...videoRows];
+          if (combinedVideos.length) basePayload.videos = combinedVideos;
+          if (removedVideoIds.length) basePayload.removeVideoIds = removedVideoIds;
+
+          await api(`/sessions/${sessionId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(basePayload),
+          });
+
+          toast("اتحدّثت الحصة بنجاح", "success");
+        } else {
+          if (type === "recorded" && !videoRows.length) {
+            return showFormMsg("sessionFormMsg", "الحصة المسجّلة لازم فيديو واحد على الأقل", "error");
+          }
+          basePayload.videos = videoRows;
+
+          await api(`/lessons/${lessonId}/sessions`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(basePayload),
+          });
+          toast("اتضافت الحصة بنجاح", "success");
+        }
+
+        closeModal("sessionModalOverlay");
+        await loadSessions(lessonId);
+        loadClasses();
+      } catch (err) {
+        showFormMsg("sessionFormMsg", err.message, "error");
+      }
+    });
+
+    async function deleteSession(sessionId, lessonId, title) {
+      if (!confirm(`متأكد إنك عايز تمسح "${title}"؟`)) return;
+      try {
+        await api(`/sessions/${sessionId}`, { method: "DELETE" });
+        toast("اتمسحت الحصة", "success");
+        await loadSessions(lessonId);
+        loadClasses();
+      } catch (err) {
+        toast(err.message, "error");
+      }
+    }
+
+    /* =====================================================
+       بداية التشغيل
+       ===================================================== */
+    initI18n({ ar: {}, en: {} });
+    loadClasses();
+
+    /* =====================================================
+       ============ قسم الطلبات (Orders) ============
+       ===================================================== */
+    let ordersCache = [];
+    let currentOrderFilter = "all";
+    let ordersLoaded = false;
+
+    async function loadOrders() {
+      const tbody = document.getElementById("ordersTableBody");
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-dim);">بيتم التحميل...</td></tr>`;
+
+      try {
+        // GET /teacher/orders بيرجّع كل الطلبات بكل حالاتها، وبنفلتر في الفرونت اند
+        const data = await api("/teacher/orders");
+        ordersCache = data.orders || [];
+        ordersLoaded = true;
+        renderOrders();
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--live);">معرفناش نجيب الطلبات: ${esc(err.message)}</td></tr>`;
+      }
+    }
+
+    function renderOrders() {
+      const tbody = document.getElementById("ordersTableBody");
+      const filtered = currentOrderFilter === "all"
+        ? ordersCache
+        : ordersCache.filter((o) => o.status === currentOrderFilter);
+
+      if (!filtered.length) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-dim);">مفيش طلبات في القسم ده.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(orderRowTemplate).join("");
+    }
+
+    const statusLabels = { pending: "معلّق", paid: "مؤكد", rejected: "مرفوض", failed: "فشل" };
+
+    function orderRowTemplate(o) {
+      const accountName = o.userId?.name || "—";
+      const accountEmail = o.userId?.email || "";
+      const transferName = o.studentName || accountName;
+      const transferPhone = o.studentPhone || "";
+      const sessionTitle = o.sessionId?.title || "—";
+      const date = o.createdAt ? new Date(o.createdAt).toLocaleDateString("ar-EG") : "—";
+
+      const actions = o.status === "pending"
+        ? `
+          <button class="btn-outline btn-sm" onclick="confirmOrder('${o._id}')">تأكيد</button>
+          <button class="btn-danger btn-sm" onclick="rejectOrder('${o._id}')">رفض</button>
+        `
+        : "";
+
+      return `
+        <tr>
+          <td class="student-cell">
+            <strong>${esc(transferName)}</strong>
+            <span dir="ltr" style="display:block;">${esc(transferPhone)}</span>
+            <span>${esc(accountEmail)}</span>
+          </td>
+          <td>${esc(sessionTitle)}</td>
+          <td>${o.amount} ج.م</td>
+          <td><span class="order-status-pill ${o.status}">${statusLabels[o.status] || o.status}</span></td>
+          <td style="color:var(--text-dim);font-size:12.5px;">${date}</td>
+          <td class="actions-cell">${actions}</td>
+        </tr>
+      `;
+    }
+
+    document.getElementById("ordersFilter").addEventListener("click", (e) => {
+      const btn = e.target.closest(".chip");
+      if (!btn) return;
+      document.querySelectorAll("#ordersFilter .chip").forEach((c) => c.classList.remove("active"));
+      btn.classList.add("active");
+      currentOrderFilter = btn.dataset.status;
+      renderOrders();
+    });
+
+    async function confirmOrder(orderId) {
+      if (!confirm("تأكيد إن الطلب ده اتدفع فعلاً؟")) return;
+      try {
+        await api(`/teacher/orders/${orderId}/confirm`, { method: "PATCH" });
+        toast("اتأكد الطلب", "success");
+        loadOrders();
+      } catch (err) {
+        toast(err.message, "error");
+      }
+    }
+
+    async function rejectOrder(orderId) {
+      if (!confirm("متأكد إنك عايز ترفض الطلب ده؟")) return;
+      try {
+        await api(`/teacher/orders/${orderId}/reject`, { method: "PATCH" });
+        toast("اترفض الطلب", "success");
+        loadOrders();
+      } catch (err) {
+        toast(err.message, "error");
+      }
+    }
+
+    // نحمّل الطلبات أول مرة بس لما القسم يتفتح (مش من الأول لغاية ما نحتاجه)
+    document.querySelector('.side-link[data-view="orders"]').addEventListener("click", () => {
+      if (!ordersLoaded) loadOrders();
+    });
+
+    /* =====================================================
+       ============ قسم "الموقع" (من أنا / تواصل) ============
+       ===================================================== */
+    let siteSettingsLoaded = false;
+    let currentSettings = null;
+
+    document.querySelector('.side-link[data-view="site"]').addEventListener("click", () => {
+      if (!siteSettingsLoaded) loadSiteSettings();
+    });
+
+    async function loadSiteSettings() {
+      try {
+        const data = await api("/settings");
+        currentSettings = data.settings || { about: {}, contact: {} };
+        fillSettingsForm(currentSettings);
+        siteSettingsLoaded = true;
+      } catch (err) {
+        showFormMsg("siteSettingsMsg", "تعذّر تحميل الإعدادات: " + err.message, "error");
+      }
+    }
+
+    function fillSettingsForm(settings) {
+      const about = settings.about || {};
+      const contact = settings.contact || {};
+
+      document.getElementById("aboutPhotoUrl").value = about.photoUrl || "";
+      document.getElementById("aboutBioInput").value = about.bio || "";
+      updatePhotoPreview(about.photoUrl || "");
+
+      document.getElementById("aboutStatsRows").innerHTML = "";
+      (about.stats || []).forEach(addStatRow);
+
+      document.getElementById("contactWhatsapp").value = contact.whatsapp || "";
+      document.getElementById("contactPhone").value = contact.phone || "";
+      document.getElementById("contactEmail").value = contact.email || "";
+      document.getElementById("contactFacebook").value = contact.facebook || "";
+      document.getElementById("contactInstagram").value = contact.instagram || "";
+      document.getElementById("contactYoutube").value = contact.youtube || "";
+      document.getElementById("contactTiktok").value = contact.tiktok || "";
+    }
+
+    function updatePhotoPreview(url) {
+      const el = document.getElementById("aboutPhotoPreview");
+      el.innerHTML = url ? `<img src="${esc(url)}" />` : "أ";
+    }
+
+    document.getElementById("aboutPhotoUrl").addEventListener("input", (e) => {
+      updatePhotoPreview(e.target.value.trim());
+    });
+
+    function addStatRow(stat = { label: "", value: "" }) {
+      const wrap = document.getElementById("aboutStatsRows");
+      const rowId = `stat-row-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      const div = document.createElement("div");
+      div.className = "stat-row";
+      div.id = rowId;
+      div.innerHTML = `
+        <input type="text" placeholder="القيمة (مثال: +1200)" class="s-value" value="${esc(stat.value)}" />
+        <input type="text" placeholder="الوصف (مثال: طالب مشترك)" class="s-label" value="${esc(stat.label)}" />
+        <button type="button" class="remove-row-btn" onclick="document.getElementById('${rowId}').remove()">✕</button>
+      `;
+      wrap.appendChild(div);
+    }
+
+    async function saveSiteSettings() {
+      hideFormMsg("siteSettingsMsg");
+
+      const stats = Array.from(document.querySelectorAll("#aboutStatsRows .stat-row"))
+        .map((row) => ({
+          label: row.querySelector(".s-label").value.trim(),
+          value: row.querySelector(".s-value").value.trim(),
+        }))
+        .filter((s) => s.label && s.value);
+
+      const payload = {
+        about: {
+          photoUrl: document.getElementById("aboutPhotoUrl").value.trim(),
+          bio: document.getElementById("aboutBioInput").value.trim(),
+          stats,
+        },
+        contact: {
+          whatsapp: document.getElementById("contactWhatsapp").value.trim(),
+          phone: document.getElementById("contactPhone").value.trim(),
+          email: document.getElementById("contactEmail").value.trim(),
+          facebook: document.getElementById("contactFacebook").value.trim(),
+          instagram: document.getElementById("contactInstagram").value.trim(),
+          youtube: document.getElementById("contactYoutube").value.trim(),
+          tiktok: document.getElementById("contactTiktok").value.trim(),
+        },
+      };
+
+      const btn = document.getElementById("saveSettingsBtn");
+      btn.disabled = true;
+      btn.textContent = "بيحفظ...";
+
+      try {
+        const data = await api("/settings", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        currentSettings = data.settings;
+        showFormMsg("siteSettingsMsg", "اتحفظت التغييرات بنجاح", "success");
+      } catch (err) {
+        showFormMsg("siteSettingsMsg", err.message, "error");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "حفظ التغييرات";
+      }
+    }
+  </script>
+
+</body>
+</html>

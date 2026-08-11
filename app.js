@@ -68,6 +68,9 @@ mongoose
   app.use("/", sessionRoutes);
   app.use("/", orderRoutes);
   app.use("/", settingsRoutes);
+  app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'home.html'));
+});
   app.get('/dashboard.html', authMiddleware,
     roleMiddleware(["teacher"]), (req, res) => {
   res.sendFile(path.join(__dirname, 'private', 'dashboard.html'));});

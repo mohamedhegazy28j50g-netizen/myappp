@@ -2,7 +2,7 @@ const express          = require("express");
 const bcrypt           = require("bcrypt");
 const crypto           = require("crypto");
 const User             = require("../models/user");
-const VerificationCode = require("../models/VerificationCode");
+const VerificationCode = require("../models/verificationcode");
 
 
 const router = express.Router();

@@ -30,9 +30,11 @@ mongoose
   .connect(process.env.MONGO_URI)
   .then(async () => {
     console.log("MongoDB connected");
-    //app.listen(process.env.PORT || 5000, () => {
-    //  console.log(`Server running on port ${process.env.PORT || 3000}`);
-   // });
+    if (require.main === module) {
+      app.listen(process.env.PORT || 5000, () => {
+        console.log(`Server running on port ${process.env.PORT || 5000}`);
+      });
+    }
   })
   .catch((error) => {
     console.error("MongoDB connection error:", error);

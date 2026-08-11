@@ -9,7 +9,7 @@ const orderRoutes = require("./routes/order");
 const settingsRoutes = require("./routes/settings");
 const authMiddleware = require("./middleware/authMiddleware");
 const roleMiddleware = require("./middleware/roleMiddleware");
-const User = require("./models/User");
+const User = require("./models/user");
 const session = require("express-session");
 const MongoStore = require("connect-mongo").default;
 

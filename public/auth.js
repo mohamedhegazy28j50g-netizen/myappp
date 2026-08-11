@@ -65,7 +65,7 @@ function normalizeEmail(email) {
 async function apiRequest(endpoint, options = {}) {
   try {
     const response = await fetch(
-      `${API_BASE_URL}${endpoint}`,
+      `/auth/${endpoint}`,
       {
         credentials: "include",
 

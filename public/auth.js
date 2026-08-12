@@ -515,6 +515,95 @@ async function handleResendRegisterCode() {
   }
 }
 
+
+// =====================================================
+// RESEND RESET CODE
+// =====================================================
+
+const resendResetCode =
+  document.getElementById(
+    "resendResetCode"
+  );
+
+if (resendResetCode) {
+
+  resendResetCode.addEventListener(
+    "click",
+    handleResendResetCode
+  );
+}
+
+async function handleResendResetCode() {
+
+  const button =
+    resendResetCode;
+
+  if (!state.email) {
+
+    showMessage(
+      "البريد الإلكتروني غير موجود.",
+      "error"
+    );
+
+    return;
+  }
+
+  button.disabled = true;
+
+  try {
+
+    await apiRequest(
+      "/forgot-password",
+      {
+        method: "POST",
+
+        body: JSON.stringify({
+          email: state.email,
+        }),
+      }
+    );
+
+    showMessage(
+      "تم إرسال كود جديد.",
+      "success"
+    );
+
+    let seconds = 30;
+
+    button.textContent =
+      `إرسال كود جديد بعد ${seconds} ثانية`;
+
+    const timer =
+      setInterval(() => {
+
+        seconds--;
+
+        button.textContent =
+          `إرسال كود جديد بعد ${seconds} ثانية`;
+
+        if (seconds <= 0) {
+
+          clearInterval(timer);
+
+          button.disabled = false;
+
+          button.textContent =
+            "إرسال كود جديد";
+        }
+
+      }, 1000);
+
+  } catch (error) {
+
+    showMessage(
+      error.message,
+      "error"
+    );
+
+    button.disabled = false;
+  }
+}
+
 // =====================================================
 // FORGOT PASSWORD
 // =====================================================

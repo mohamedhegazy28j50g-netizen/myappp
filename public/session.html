@@ -151,6 +151,15 @@
     font-weight: 700; font-size: 14.5px; border: none; cursor: pointer;
   }
 
+  .unlock-btn-secondary {
+    margin-top: 10px; padding: 10px 20px; border-radius: 10px;
+    background: transparent; color: var(--text);
+    border: 1px solid var(--border);
+    font-weight: 700; font-size: 13px; cursor: pointer;
+    transition: border-color 0.15s ease;
+  }
+  .unlock-btn-secondary:hover { border-color: var(--accent); }
+
   .current-video-title { font-size: 19px; font-weight: 700; }
   .current-video-meta { font-size: 13px; color: var(--text-dim); margin-top: 4px; }
 
@@ -274,7 +283,74 @@
   }
 
   .purchase-card h3 { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
-  .purchase-card > p.purchase-sub { color: var(--text-dim); font-size: 13.5px; margin-bottom: 18px; line-height: 1.8; }
+
+  .purchase-sub { color: var(--text-dim); font-size: 13.5px; margin-bottom: 18px; line-height: 1.8; }
+
+  .method-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 15px 16px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--surface-2);
+    cursor: pointer;
+    margin-bottom: 12px;
+    transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+  }
+
+  .method-card:hover {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 8%, var(--surface-2));
+    transform: translateY(-1px);
+  }
+
+  .method-card .method-icon {
+    width: 42px; height: 42px; flex-shrink: 0; border-radius: 11px;
+    display: flex; align-items: center; justify-content: center; font-size: 19px;
+    background: color-mix(in srgb, var(--accent) 16%, transparent);
+  }
+
+  .method-card .method-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+  .method-card .method-info strong { font-size: 14.5px; font-weight: 700; }
+  .method-card .method-info span { font-size: 12.5px; color: var(--text-dim); }
+
+  .method-card .method-arrow {
+    flex-shrink: 0;
+    font-size: 20px;
+    color: var(--text-dim);
+  }
+
+  .back-to-choice-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 0;
+    background: transparent;
+    color: var(--text-dim);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 0;
+    margin-bottom: 14px;
+  }
+  .back-to-choice-btn:hover { color: var(--text); }
+
+  .code-hint {
+    color: var(--text-dim);
+    font-size: 13px;
+    margin-bottom: 14px;
+    line-height: 1.8;
+  }
+
+  .code-input {
+    text-align: center;
+    letter-spacing: 3px;
+    font-weight: 800;
+    font-size: 18px;
+    direction: ltr;
+  }
 
   .purchase-transfer-box {
     background: var(--surface-2);
@@ -434,36 +510,87 @@
     <div class="purchase-card">
       <div id="purchaseFormState">
         <h3 data-i18n="purchaseTitle">اشترِ الوصول للحصة</h3>
-        <p class="purchase-sub" data-i18n="purchaseSub">حوّل المبلغ، ابعت السكرين شوت على واتساب، واملأ بياناتك — هيتفعّل الوصول بعد ما نتأكد من التحويل.</p>
 
-        <div class="purchase-transfer-box">
-          <div class="amount" id="purchaseAmount"></div>
-          <div data-i18n="transferTo">حوّل على الرقم (فودافون كاش / إنستاباي):</div>
-          <div class="number">01119103460</div>
-          <div class="hint-sm" data-i18n="transferHint">تأكد من المبلغ قبل التحويل</div>
-        </div>
+        <div id="purchaseMethodChoice">
+          <p class="purchase-sub" data-i18n="purchaseSubChoice">اختار طريقة تفعيل الحصة:</p>
 
-        <a class="whatsapp-btn" id="whatsappBtn" target="_blank" rel="noopener">
-          📱 <span data-i18n="whatsappBtnText">ابعت سكرين شوت التحويل على واتساب</span>
-        </a>
-
-        <form class="purchase-form" id="purchaseForm">
-          <div>
-            <label for="purchaseName" data-i18n="fullNameLabel">الاسم الثلاثي</label>
-            <input type="text" id="purchaseName" required autocomplete="name" />
-          </div>
-          <div>
-            <label for="purchasePhone" data-i18n="phoneLabel">رقم تليفون للتواصل</label>
-            <input type="tel" id="purchasePhone" required autocomplete="tel" dir="ltr" />
+          <div class="method-card" id="chooseTransferCard">
+            <div class="method-icon">💳</div>
+            <div class="method-info">
+              <strong data-i18n="methodTransferTitle">تحويل يدوي</strong>
+              <span data-i18n="methodTransferDesc">حوّل المبلغ وابعت إثبات على واتساب</span>
+            </div>
+            <div class="method-arrow">‹</div>
           </div>
 
-          <div class="purchase-msg" id="purchaseMsg"></div>
+          <div class="method-card" id="chooseCodeCard">
+            <div class="method-icon">🔑</div>
+            <div class="method-info">
+              <strong data-i18n="methodCodeTitle">عندي كود تفعيل</strong>
+              <span data-i18n="methodCodeDesc">من المدرس، وهيفتح الحصة فورًا</span>
+            </div>
+            <div class="method-arrow">‹</div>
+          </div>
 
           <div class="purchase-actions">
-            <button type="button" class="purchase-cancel-btn" id="purchaseCancelBtn" data-i18n="cancelBtn">إلغاء</button>
-            <button type="submit" class="purchase-confirm-btn" id="purchaseSubmitBtn" data-i18n="confirmTransferBtn">تأكيد إني حوّلت</button>
+            <button type="button" class="purchase-cancel-btn" id="choiceCancelBtn" data-i18n="cancelBtn" style="flex:1;">إلغاء</button>
           </div>
-        </form>
+        </div>
+
+        <div id="transferTabContent" style="display:none;">
+          <button type="button" class="back-to-choice-btn" id="backFromTransferBtn">→ <span data-i18n="backBtn">رجوع</span></button>
+
+          <p class="purchase-sub" data-i18n="purchaseSub">حوّل المبلغ، ابعت السكرين شوت على واتساب، واملأ بياناتك — هيتفعّل الوصول بعد ما نتأكد من التحويل.</p>
+
+          <div class="purchase-transfer-box">
+            <div class="amount" id="purchaseAmount"></div>
+            <div data-i18n="transferTo">حوّل على الرقم (فودافون كاش / إنستاباي):</div>
+            <div class="number">01119103460</div>
+            <div class="hint-sm" data-i18n="transferHint">تأكد من المبلغ قبل التحويل</div>
+          </div>
+
+          <a class="whatsapp-btn" id="whatsappBtn" target="_blank" rel="noopener">
+            📱 <span data-i18n="whatsappBtnText">ابعت سكرين شوت التحويل على واتساب</span>
+          </a>
+
+          <form class="purchase-form" id="purchaseForm">
+            <div>
+              <label for="purchaseName" data-i18n="fullNameLabel">الاسم الثلاثي</label>
+              <input type="text" id="purchaseName" required autocomplete="name" />
+            </div>
+            <div>
+              <label for="purchasePhone" data-i18n="phoneLabel">رقم تليفون للتواصل</label>
+              <input type="tel" id="purchasePhone" required autocomplete="tel" dir="ltr" />
+            </div>
+
+            <div class="purchase-msg" id="purchaseMsg"></div>
+
+            <div class="purchase-actions">
+              <button type="button" class="purchase-cancel-btn" id="purchaseCancelBtn" data-i18n="cancelBtn">إلغاء</button>
+              <button type="submit" class="purchase-confirm-btn" id="purchaseSubmitBtn" data-i18n="confirmTransferBtn">تأكيد إني حوّلت</button>
+            </div>
+          </form>
+        </div>
+
+        <div id="codeTabContent" style="display:none;">
+          <button type="button" class="back-to-choice-btn" id="backFromCodeBtn">→ <span data-i18n="backBtn">رجوع</span></button>
+
+          <p class="code-hint" data-i18n="codeHint">خد كود التفعيل من المدرس وحطه هنا، وهيتفتح الوصول للحصة فورًا.</p>
+
+          <form class="purchase-form" id="codeForm">
+            <div>
+              <label for="purchaseCode" data-i18n="codeLabel">كود التفعيل</label>
+              <input type="text" id="purchaseCode" class="code-input" required autocomplete="off" inputmode="numeric" maxlength="9" />
+            </div>
+
+            <div class="purchase-msg" id="codeMsg"></div>
+
+            <div class="purchase-actions">
+              <button type="button" class="purchase-cancel-btn" id="codeCancelBtn" data-i18n="cancelBtn">إلغاء</button>
+              <button type="submit" class="purchase-confirm-btn" id="codeSubmitBtn" data-i18n="activateBtn">تفعيل</button>
+            </div>
+          </form>
+        </div>
       </div>
 
       <div id="purchaseSuccessState" class="purchase-success-state" style="display:none;">
@@ -472,6 +599,15 @@
         <p data-i18n="pendingBody">هنراجع التحويل ونفعّل الوصول للحصة بأقرب وقت. تقدر تتابع حالة الطلب من صفحة "طلباتي".</p>
         <div class="purchase-actions">
           <button type="button" class="purchase-confirm-btn" id="purchaseCloseBtn" data-i18n="closeBtn" style="flex:1;">تمام</button>
+        </div>
+      </div>
+
+      <div id="codeActivatedState" class="purchase-success-state" style="display:none;">
+        <div class="big-icon">✅</div>
+        <h4 data-i18n="activatedTitle">تم تفعيل الحصة بنجاح</h4>
+        <p data-i18n="activatedBody">الحصة اتفتحت، تقدر تبدأ تتفرج على الفيديوهات دلوقتي.</p>
+        <div class="purchase-actions">
+          <button type="button" class="purchase-confirm-btn" id="codeActivatedCloseBtn" data-i18n="startWatchingBtn" style="flex:1;">ابدأ المذاكرة</button>
         </div>
       </div>
     </div>
@@ -521,6 +657,22 @@
         closeBtn: "تمام",
         whatsappMsg: (title, amount) => `السلام عليكم، حوّلت ${amount} ج.م عشان حصة "${title}"، وده إثبات التحويل:`,
         purchaseNeedLogin: "لازم تسجّل دخول الأول عشان تشتري الحصة.",
+        purchaseSubChoice: "اختار طريقة تفعيل الحصة:",
+        methodTransferTitle: "تحويل يدوي",
+        methodTransferDesc: "حوّل المبلغ وابعت إثبات على واتساب",
+        methodCodeTitle: "عندي كود تفعيل",
+        methodCodeDesc: "من المدرس، وهيفتح الحصة فورًا",
+        backBtn: "رجوع",
+        pendingActivateCode: "عندك كود من المدرس؟ فعّل الحصة على طول",
+        codeHint: "خد كود التفعيل من المدرس وحطه هنا، وهيتفتح الوصول للحصة فورًا.",
+        codeLabel: "كود التفعيل",
+        activateBtn: "تفعيل",
+        activateBtnLoading: "بيتفعّل...",
+        activatedTitle: "تم تفعيل الحصة بنجاح",
+        activatedBody: "الحصة اتفتحت، تقدر تبدأ تتفرج على الفيديوهات دلوقتي.",
+        startWatchingBtn: "ابدأ المذاكرة",
+        codeInvalid: "الكود ده غلط أو مستخدم قبل كده",
+        codeAlreadyOwned: "عندك وصول للحصة دي بالفعل",
       },
       en: {
         brandName: "Teacher Name", navCta: "Log In",
@@ -562,6 +714,22 @@
         closeBtn: "Got it",
         whatsappMsg: (title, amount) => `Hi, I transferred ${amount} EGP for the session "${title}", here's the proof:`,
         purchaseNeedLogin: "Please log in first to buy this session.",
+        purchaseSubChoice: "Choose how you'd like to activate this session:",
+        methodTransferTitle: "Manual transfer",
+        methodTransferDesc: "Transfer the amount and send proof on WhatsApp",
+        methodCodeTitle: "I have an activation code",
+        methodCodeDesc: "From your teacher — unlocks the session instantly",
+        backBtn: "Back",
+        pendingActivateCode: "Have a code from your teacher? Activate now",
+        codeHint: "Get the activation code from your teacher and enter it here — access unlocks instantly.",
+        codeLabel: "Activation code",
+        activateBtn: "Activate",
+        activateBtnLoading: "Activating...",
+        activatedTitle: "Session activated successfully",
+        activatedBody: "The session is unlocked — you can start watching now.",
+        startWatchingBtn: "Start watching",
+        codeInvalid: "This code is invalid or already used",
+        codeAlreadyOwned: "You already have access to this session",
       },
     };
 
@@ -727,8 +895,15 @@
             <div class="lock-icon">⏳</div>
             <h3>${t.pendingTitle}</h3>
             <p>${t.pendingBody}</p>
+            <button class="unlock-btn-secondary" id="pendingActivateCodeBtn">
+              ${t.pendingActivateCode}
+            </button>
           </div>
         `;
+
+        document
+          .getElementById("pendingActivateCodeBtn")
+          .addEventListener("click", () => openPurchaseModal("code"));
       } else {
         shell.innerHTML = `
           <div class="player-locked">
@@ -743,7 +918,7 @@
 
         document
           .getElementById("unlockBtn")
-          .addEventListener("click", openPurchaseModal);
+          .addEventListener("click", () => openPurchaseModal());
       }
 
       document.getElementById("currentVideoTitle").textContent =
@@ -867,13 +1042,24 @@
     /* ============ مودال الشراء (تحويل يدوي + واتساب) ============ */
     const WHATSAPP_NUMBER = "201119103460"; // بصيغة دولية من غير + أو أصفار، لازم يتطابق مع رقم التحويل
 
-    function openPurchaseModal() {
+    function showPurchaseView(view) {
+      // view: "choice" | "transfer" | "code"
+      document.getElementById("purchaseMethodChoice").style.display = view === "choice" ? "block" : "none";
+      document.getElementById("transferTabContent").style.display = view === "transfer" ? "block" : "none";
+      document.getElementById("codeTabContent").style.display = view === "code" ? "block" : "none";
+    }
+
+    function openPurchaseModal(initialView) {
       const t = translations[getLang()];
 
       document.getElementById("purchaseFormState").style.display = "block";
       document.getElementById("purchaseSuccessState").style.display = "none";
+      document.getElementById("codeActivatedState").style.display = "none";
       document.getElementById("purchaseForm").reset();
+      document.getElementById("codeForm").reset();
       hidePurchaseMsg();
+      hideCodeMsg();
+      showPurchaseView(initialView || "choice");
 
       const amountText = getLang() === "ar" ? `${sessionData.price} ج.م` : `${sessionData.price} EGP`;
       document.getElementById("purchaseAmount").textContent = amountText;
@@ -898,6 +1084,28 @@
       const el = document.getElementById("purchaseMsg");
       el.className = "purchase-msg";
     }
+
+    function showCodeMsg(text, type) {
+      const el = document.getElementById("codeMsg");
+      el.textContent = text;
+      el.className = `purchase-msg show ${type}`;
+    }
+
+    function hideCodeMsg() {
+      const el = document.getElementById("codeMsg");
+      el.className = "purchase-msg";
+    }
+
+    document.getElementById("chooseTransferCard").addEventListener("click", () => showPurchaseView("transfer"));
+    document.getElementById("chooseCodeCard").addEventListener("click", () => showPurchaseView("code"));
+    document.getElementById("backFromTransferBtn").addEventListener("click", () => showPurchaseView("choice"));
+    document.getElementById("backFromCodeBtn").addEventListener("click", () => showPurchaseView("choice"));
+    document.getElementById("choiceCancelBtn").addEventListener("click", closePurchaseModal);
+    document.getElementById("codeCancelBtn").addEventListener("click", closePurchaseModal);
+    document.getElementById("codeActivatedCloseBtn").addEventListener("click", () => {
+      closePurchaseModal();
+      window.location.reload();
+    });
 
     document.getElementById("purchaseCancelBtn").addEventListener("click", closePurchaseModal);
     document.getElementById("purchaseOverlay").addEventListener("click", (e) => {
@@ -948,6 +1156,49 @@
       } finally {
         submitBtn.disabled = false;
         submitBtn.textContent = t.confirmTransferBtn;
+      }
+    });
+
+    document.getElementById("codeForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const t = translations[getLang()];
+      hideCodeMsg();
+
+      const code = document.getElementById("purchaseCode").value.trim();
+      if (!code) return;
+
+      const submitBtn = document.getElementById("codeSubmitBtn");
+      submitBtn.disabled = true;
+      submitBtn.textContent = t.activateBtnLoading;
+
+      try {
+        const res = await fetch("/orders/direct-code", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json", ...authHeaders() },
+          body: JSON.stringify({ code, sessionId }),
+        });
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          if (res.status === 400 && /already have access/i.test(data.message || "")) {
+            showCodeMsg(t.codeAlreadyOwned, "error");
+          } else if (res.status === 400 && /invalid or used code/i.test(data.message || "")) {
+            showCodeMsg(t.codeInvalid, "error");
+          } else {
+            showCodeMsg(data.message || `HTTP ${res.status}`, "error");
+          }
+          return;
+        }
+
+        // الكود اتفعّل والـOrder بقى "paid" على طول — نوري حالة النجاح
+        document.getElementById("purchaseFormState").style.display = "none";
+        document.getElementById("codeActivatedState").style.display = "block";
+      } catch (err) {
+        showCodeMsg(err.message, "error");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = t.activateBtn;
       }
     });
 

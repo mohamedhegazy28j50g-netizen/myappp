@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 dotenv.config();
 const classRoutes = require("./routes/class");
+const userRoutes = require("./routes/user");
  const authRoutes = require("./routes/auth");
 const lessonRoutes = require("./routes/lesson");
 const sessionRoutes = require("./routes/session");
@@ -10,6 +11,8 @@ const orderRoutes = require("./routes/order");
 const settingsRoutes = require("./routes/settings");
 const authMiddleware = require("./middleware/authMiddleware");
 const roleMiddleware = require("./middleware/roleMiddleware");
+const directCodeRoutes = require("./routes/directcode");
+
 const User = require("./models/user");
 const session = require("express-session");
 const MongoStore = require("connect-mongo").default;
@@ -71,9 +74,11 @@ mongoose
   app.use("/", sessionRoutes);
   app.use("/", orderRoutes);
   app.use("/", settingsRoutes);
+  app.use("/", directCodeRoutes);
+  app.use("/", userRoutes);
   app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'home.html'));
-});
+  });
   app.get('/dashboard.html', authMiddleware,
     roleMiddleware(["teacher"]), (req, res) => {
   res.sendFile(path.join(__dirname, 'private', 'dashboard.html'));});

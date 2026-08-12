@@ -24,7 +24,7 @@ const orderSchema = new mongoose.Schema(
 
     studentPhone: {
       type: String,
-      required: true,
+      required: false,
       trim: true,
     },
 
@@ -35,7 +35,7 @@ const orderSchema = new mongoose.Schema(
 
     paymentMethod: {
   type: String,
-  enum: ["cash"],
+  enum: ["cash" , "activation_code"],
   default: "cash",
 },
 

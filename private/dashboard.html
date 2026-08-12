@@ -554,7 +554,99 @@
   .order-status-pill.paid { background: color-mix(in srgb, var(--free) 16%, transparent); color: var(--free); }
   .order-status-pill.rejected, .order-status-pill.failed { background: color-mix(in srgb, var(--live) 14%, transparent); color: var(--live); }
 
-  .orders-table .actions-cell { display: flex; gap: 6px; white-space: nowrap; }
+  /* ============ مودال أكواد الحصة (Direct Codes) ============ */
+  .codes-stats-bar {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .codes-stat {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    text-align: center;
+  }
+  .codes-stat .num { font-size: 18px; font-weight: 800; }
+  .codes-stat .lbl { font-size: 11.5px; color: var(--text-dim); margin-top: 2px; }
+
+  .codes-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+
+  .code-row {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 8px;
+    overflow: hidden;
+  }
+  .code-row-main {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--surface-2);
+  }
+  .code-row-main code {
+    font-family: monospace;
+    font-size: 14.5px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .code-status-pill {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 100px;
+    flex-shrink: 0;
+  }
+  .code-status-pill.free { background: color-mix(in srgb, var(--free) 16%, transparent); color: var(--free); }
+  .code-status-pill.used { background: var(--surface); color: var(--text-dim); border: 1px solid var(--border); }
+
+  .code-row-details {
+    display: none;
+    padding: 10px 14px;
+    font-size: 12.5px;
+    color: var(--text-dim);
+    border-top: 1px solid var(--border);
+  }
+  .code-row.expanded .code-row-details { display: block; }
+
+  .orders-table .actions-cell { white-space: nowrap; }
+  .orders-table .actions-cell .row-actions { justify-content: flex-start; }
+
+  /* ============ USERS TABLE ============ */
+  .users-toolbar {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  .users-table { table-layout: fixed; }
+  .users-table th, .users-table td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .users-table th:nth-child(1), .users-table td:nth-child(1) { width: 24%; }
+  .users-table th:nth-child(2), .users-table td:nth-child(2) { width: 34%; }
+  .users-table th:nth-child(3), .users-table td:nth-child(3) { width: 20%; }
+  .users-table th:nth-child(4), .users-table td:nth-child(4) { width: 12%; text-align: left; }
+  .users-table td:nth-child(2) { direction: ltr; text-align: right; }
+
+  @media (max-width: 560px) {
+    .users-table { table-layout: auto; }
+    .users-table th, .users-table td { white-space: normal; }
+  }
 
   @media (max-width: 760px) {
     .orders-table-wrap { overflow-x: auto; }
@@ -592,7 +684,8 @@
         <button class="side-link active" data-view="courses">📚 الكورسات</button>
         <button class="side-link" data-view="orders">🧾 الطلبات</button>
         <button class="side-link" data-view="site">🌐 الموقع</button>
-        <button class="side-link soon" disabled>👥 المستخدمين <span class="badge-soon">قريباً</span></button>
+        <button class="side-link" data-view="codes">🎟️ الأكواد</button>
+        <button class="side-link" data-view="users">👥 المستخدمين</button>
       </aside>
 
       <!-- ============ MAIN ============ -->
@@ -730,6 +823,110 @@
 
           <div class="settings-save-bar">
             <button class="btn-primary" id="saveSettingsBtn" onclick="saveSiteSettings()">حفظ التغييرات</button>
+          </div>
+        </section>
+
+        <!-- ============ VIEW: DIRECT CODES ============ -->
+        <section class="dash-view" id="view-codes">
+          <div class="view-header">
+            <div>
+              <h1>الأكواد</h1>
+              <p>اختار الحصة عشان تولّد أكواد جديدة، أو تشوف الأكواد اللي اتباعت والمستخدمة والفاضلة.</p>
+            </div>
+          </div>
+
+          <div class="settings-card">
+            <h2 style="margin-bottom:14px;">اختيار الحصة</h2>
+            <div class="field-row">
+              <div class="field">
+                <label for="codesClassSelect">الكورس</label>
+                <select id="codesClassSelect">
+                  <option value="">اختار كورس...</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="codesLessonSelect">الدرس</label>
+                <select id="codesLessonSelect" disabled>
+                  <option value="">اختار درس...</option>
+                </select>
+              </div>
+            </div>
+            <div class="field">
+              <label for="codesSessionSelect">الحصة</label>
+              <select id="codesSessionSelect" disabled>
+                <option value="">اختار حصة...</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="codesSessionPanel" style="display:none;">
+            <div class="settings-card">
+              <div class="view-header" style="margin-bottom:14px;">
+                <div>
+                  <h2 id="codesSessionTitle" style="font-size:16.5px;font-weight:800;"></h2>
+                </div>
+                <button class="btn-primary btn-sm" onclick="generateDirectCodes()">+ توليد أكواد</button>
+              </div>
+
+              <div class="codes-stats-bar">
+                <div class="codes-stat"><div class="num" id="codesStatTotal">—</div><div class="lbl">إجمالي</div></div>
+                <div class="codes-stat"><div class="num" id="codesStatUsed">—</div><div class="lbl">مستخدمة</div></div>
+                <div class="codes-stat"><div class="num" id="codesStatRemaining">—</div><div class="lbl">فاضلة</div></div>
+              </div>
+
+              <div class="orders-filter" id="codesFilter">
+                <button class="chip active" data-filter="all">الكل</button>
+                <button class="chip" data-filter="unused">فاضلة</button>
+                <button class="chip" data-filter="used">مستخدمة</button>
+              </div>
+
+              <div id="codesListWrap">
+                <p style="color:var(--text-dim);font-size:12.5px;">بيتم التحميل...</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="empty-state" id="codesEmptyState">
+            <div class="icon">🎟️</div>
+            <h3 style="color:var(--text);margin-bottom:6px;">اختار حصة الأول</h3>
+            <p>اختار كورس ثم درس ثم حصة عشان تشوف وتولّد الأكواد بتاعتها.</p>
+          </div>
+        </section>
+
+        <!-- ============ VIEW: USERS ============ -->
+        <section class="dash-view" id="view-users">
+          <div class="view-header">
+            <div>
+              <h1>المستخدمين</h1>
+              <p>كل الطلاب المسجّلين على المنصة.</p>
+            </div>
+          </div>
+
+          <div class="users-toolbar">
+            <div class="field" style="max-width:360px;margin-bottom:0;flex:1;">
+              <label for="usersEmailSearch">بحث بالإيميل</label>
+              <input type="text" id="usersEmailSearch" dir="ltr" placeholder="example@email.com" />
+            </div>
+            <div class="codes-stat" style="min-width:130px;">
+              <div class="num" id="usersTotalCount">—</div>
+              <div class="lbl">إجمالي الطلاب</div>
+            </div>
+          </div>
+
+          <div class="orders-table-wrap">
+            <table class="orders-table users-table">
+              <thead>
+                <tr>
+                  <th>الاسم</th>
+                  <th>الإيميل</th>
+                  <th>تاريخ التسجيل</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="usersTableBody">
+                <!-- صفوف اليوزرز بتتحط هنا -->
+              </tbody>
+            </table>
           </div>
         </section>
 
@@ -1647,6 +1844,272 @@
     }
 
     /* =====================================================
+       ============ قسم الأكواد (Direct Codes) ============
+       ===================================================== */
+    let codesCache = [];
+    let currentCodesSessionId = null;
+    let currentCodesFilter = "all";
+    let codesSectionLoaded = false;
+
+    document.querySelector('.side-link[data-view="codes"]').addEventListener("click", () => {
+      if (!codesSectionLoaded) initCodesSection();
+    });
+
+    async function initCodesSection() {
+      codesSectionLoaded = true;
+      const classSelect = document.getElementById("codesClassSelect");
+
+      try {
+        // بنستخدم classesCache لو محمّلة، وإلا بنجيبها من جديد
+        if (!classesCache.length) {
+          const data = await api("/classes");
+          classesCache = data.classes || [];
+        }
+        classSelect.innerHTML =
+          `<option value="">اختار كورس...</option>` +
+          classesCache.map((c) => `<option value="${c._id}">${esc(c.title)}</option>`).join("");
+      } catch (err) {
+        toast("معرفناش نجيب الكورسات: " + err.message, "error");
+      }
+    }
+
+    document.getElementById("codesClassSelect").addEventListener("change", async (e) => {
+      const classId = e.target.value;
+      const lessonSelect = document.getElementById("codesLessonSelect");
+      const sessionSelect = document.getElementById("codesSessionSelect");
+
+      lessonSelect.innerHTML = `<option value="">اختار درس...</option>`;
+      sessionSelect.innerHTML = `<option value="">اختار حصة...</option>`;
+      lessonSelect.disabled = true;
+      sessionSelect.disabled = true;
+      hideCodesPanel();
+
+      if (!classId) return;
+
+      try {
+        const data = await api(`/classes/${classId}/lessons`);
+        const lessons = data.lessons || [];
+        lessonSelect.innerHTML =
+          `<option value="">اختار درس...</option>` +
+          lessons.map((l) => `<option value="${l._id}">${esc(l.title)}</option>`).join("");
+        lessonSelect.disabled = false;
+      } catch (err) {
+        toast("معرفناش نجيب الدروس: " + err.message, "error");
+      }
+    });
+
+    document.getElementById("codesLessonSelect").addEventListener("change", async (e) => {
+      const lessonId = e.target.value;
+      const sessionSelect = document.getElementById("codesSessionSelect");
+
+      sessionSelect.innerHTML = `<option value="">اختار حصة...</option>`;
+      sessionSelect.disabled = true;
+      hideCodesPanel();
+
+      if (!lessonId) return;
+
+      try {
+        const data = await api(`/lessons/${lessonId}/sessions`);
+        const sessions = data.sessions || [];
+        sessionSelect.innerHTML =
+          `<option value="">اختار حصة...</option>` +
+          sessions.map((s) => `<option value="${s._id}" data-title="${esc(s.title)}">${esc(s.title)}</option>`).join("");
+        sessionSelect.disabled = false;
+      } catch (err) {
+        toast("معرفناش نجيب الحصص: " + err.message, "error");
+      }
+    });
+
+    document.getElementById("codesSessionSelect").addEventListener("change", (e) => {
+      const sessionId = e.target.value;
+      if (!sessionId) {
+        hideCodesPanel();
+        return;
+      }
+      const title = e.target.selectedOptions[0].dataset.title || "";
+      showCodesPanel(sessionId, title);
+    });
+
+    function hideCodesPanel() {
+      currentCodesSessionId = null;
+      document.getElementById("codesSessionPanel").style.display = "none";
+      document.getElementById("codesEmptyState").style.display = "";
+    }
+
+    function showCodesPanel(sessionId, sessionTitle) {
+      currentCodesSessionId = sessionId;
+      currentCodesFilter = "all";
+      document.querySelectorAll("#codesFilter .chip").forEach((c) => c.classList.remove("active"));
+      document.querySelector('#codesFilter .chip[data-filter="all"]').classList.add("active");
+
+      document.getElementById("codesSessionTitle").textContent = sessionTitle;
+      document.getElementById("codesSessionPanel").style.display = "";
+      document.getElementById("codesEmptyState").style.display = "none";
+
+      loadDirectCodes(sessionId);
+    }
+
+    async function loadDirectCodes(sessionId) {
+      const wrap = document.getElementById("codesListWrap");
+      wrap.innerHTML = `<p style="color:var(--text-dim);font-size:12.5px;">بيتم التحميل...</p>`;
+
+      try {
+        const data = await api(`/orders/direct-code/session/${sessionId}`);
+        codesCache = data.codes || [];
+
+        document.getElementById("codesStatTotal").textContent = data.total ?? codesCache.length;
+        document.getElementById("codesStatUsed").textContent = data.used ?? codesCache.filter((c) => c.isUsed).length;
+        document.getElementById("codesStatRemaining").textContent =
+          data.remaining ?? (codesCache.length - codesCache.filter((c) => c.isUsed).length);
+
+        renderDirectCodes();
+      } catch (err) {
+        wrap.innerHTML = `<p style="color:var(--live);font-size:12.5px;">معرفناش نجيب الأكواد: ${esc(err.message)}</p>`;
+      }
+    }
+
+    function renderDirectCodes() {
+      const wrap = document.getElementById("codesListWrap");
+
+      const filtered = codesCache.filter((c) => {
+        if (currentCodesFilter === "used") return c.isUsed;
+        if (currentCodesFilter === "unused") return !c.isUsed;
+        return true;
+      });
+
+      if (!filtered.length) {
+        wrap.innerHTML = `<p style="color:var(--text-dim);font-size:12.5px;text-align:center;padding:20px 0;">مفيش أكواد في القسم ده.</p>`;
+        return;
+      }
+
+      wrap.innerHTML = filtered.map(codeRowTemplate).join("");
+    }
+
+    function codeRowTemplate(c) {
+      const usedByName = c.usedBy?.name || c.usedBy?.email || "—";
+      const usedAt = c.usedAt ? new Date(c.usedAt).toLocaleString("ar-EG") : "—";
+
+      const details = c.isUsed
+        ? `اتستخدم بواسطة: <strong>${esc(usedByName)}</strong> — بتاريخ: ${usedAt}`
+        : `الكود لسه متستخدمش.`;
+
+      return `
+        <div class="code-row" id="code-row-${c._id}">
+          <div class="code-row-main">
+            <code>${esc(c.code)}</code>
+            <span class="code-status-pill ${c.isUsed ? "used" : "free"}">${c.isUsed ? "مستخدم" : "فاضي"}</span>
+            <button class="btn-outline btn-sm" style="margin-inline-start:auto;" onclick="toggleCodeDetails('${c._id}')">تفاصيل</button>
+          </div>
+          <div class="code-row-details">${details}</div>
+        </div>
+      `;
+    }
+
+    function toggleCodeDetails(codeId) {
+      document.getElementById(`code-row-${codeId}`).classList.toggle("expanded");
+    }
+
+    document.getElementById("codesFilter").addEventListener("click", (e) => {
+      const btn = e.target.closest(".chip");
+      if (!btn) return;
+      document.querySelectorAll("#codesFilter .chip").forEach((c) => c.classList.remove("active"));
+      btn.classList.add("active");
+      currentCodesFilter = btn.dataset.filter;
+      renderDirectCodes();
+    });
+
+    async function generateDirectCodes() {
+      if (!currentCodesSessionId) return;
+
+      const countStr = prompt("عايز تولّد كام كود؟");
+      if (countStr === null) return;
+
+      const count = parseInt(countStr, 10);
+      if (!count || count <= 0) {
+        toast("اكتب رقم صحيح أكبر من صفر", "error");
+        return;
+      }
+
+      try {
+        const data = await api("/orders/direct-code/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId: currentCodesSessionId, count }),
+        });
+        toast(`اتولّدت ${data.count} كود بنجاح`, "success");
+        await loadDirectCodes(currentCodesSessionId);
+      } catch (err) {
+        toast(err.message, "error");
+      }
+    }
+
+    /* =====================================================
+       ============ قسم المستخدمين (Users) ============
+       ===================================================== */
+    let usersCache = [];
+    let usersSectionLoaded = false;
+
+    document.querySelector('.side-link[data-view="users"]').addEventListener("click", () => {
+      if (!usersSectionLoaded) loadUsers();
+    });
+
+    // بنحمّل كل المستخدمين مرة واحدة بس، والفلترة بعد كده بتتم محليًا
+    // من غير ما نرجع للسيرفر تاني (زي قسم الطلبات بالظبط).
+    async function loadUsers() {
+      const tbody = document.getElementById("usersTableBody");
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:30px;color:var(--text-dim);white-space:normal;">بيتم التحميل...</td></tr>`;
+
+      try {
+        const data = await api("/users");
+        usersCache = data.users || [];
+        usersSectionLoaded = true;
+
+        document.getElementById("usersTotalCount").textContent = data.total ?? usersCache.length;
+
+        renderUsers();
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:30px;color:var(--live);white-space:normal;">معرفناش نجيب المستخدمين: ${esc(err.message)}</td></tr>`;
+      }
+    }
+
+    function renderUsers() {
+      const tbody = document.getElementById("usersTableBody");
+      const searchValue = document.getElementById("usersEmailSearch").value.trim().toLowerCase();
+
+      const filtered = searchValue
+        ? usersCache.filter((u) => (u.email || "").toLowerCase().includes(searchValue))
+        : usersCache;
+
+      if (!filtered.length) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:30px;color:var(--text-dim);white-space:normal;">مفيش مستخدمين بالمواصفات دي.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(userRowTemplate).join("");
+    }
+
+    function userRowTemplate(u) {
+      const date = u.createdAt ? new Date(u.createdAt).toLocaleDateString("ar-EG") : "—";
+      const name = u.name || "—";
+      const email = u.email || "—";
+
+      return `
+        <tr>
+          <td title="${esc(name)}"><strong>${esc(name)}</strong></td>
+          <td title="${esc(email)}">${esc(email)}</td>
+          <td style="color:var(--text-dim);font-size:12.5px;">${date}</td>
+          <td class="actions-cell">
+            <button class="btn-outline btn-sm" disabled title="هتتضاف قريباً">تفاصيل</button>
+          </td>
+        </tr>
+      `;
+    }
+
+    document.getElementById("usersEmailSearch").addEventListener("input", () => {
+      renderUsers();
+    });
+
+    /* =====================================================
        بداية التشغيل
        ===================================================== */
     initI18n({ ar: {}, en: {} });
@@ -1700,8 +2163,10 @@
 
       const actions = o.status === "pending"
         ? `
-          <button class="btn-outline btn-sm" onclick="confirmOrder('${o._id}')">تأكيد</button>
-          <button class="btn-danger btn-sm" onclick="rejectOrder('${o._id}')">رفض</button>
+          <div class="row-actions">
+            <button class="btn-outline btn-sm" onclick="confirmOrder('${o._id}')">تأكيد</button>
+            <button class="btn-danger btn-sm" onclick="rejectOrder('${o._id}')">رفض</button>
+          </div>
         `
         : "";
 

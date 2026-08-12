@@ -1,5 +1,6 @@
 const express = require("express");
 const mongoose = require("mongoose");
+const Directcode = require("../models/directcode");
 
 const Order = require("../models/order");
 const Session = require("../models/session");
@@ -388,5 +389,81 @@ router.patch(
     }
   }
 );
+
+
+// make paid order by direct code
+router.post(
+  "/orders/direct-code",
+  authMiddleware,
+  async (req, res) => {
+    try {
+      const { code, sessionId } = req.body;
+
+      if (!code || !sessionId) {
+        return res.status(400).json({
+          message: "Code and session ID are required",
+        });
+      }
+
+      // Get session
+      const session = await Session.findById(sessionId);
+
+      if (!session) {
+        return res.status(404).json({
+          message: "Session not found",
+        });
+      }
+
+      // Find unused code for this session
+      const matchedCode = await Directcode.findOne({
+        code,
+        sessionId,
+        isUsed: false,
+      });
+
+      if (!matchedCode) {
+        return res.status(400).json({
+          message: "Invalid or used code",
+        });
+      }
+
+      // Create paid order
+      const order = await Order.create({
+        userId: req.user._id,
+        sessionId: sessionId,
+        studentName: req.user.name,
+        status: "paid",
+        paymentMethod: "activation_code",
+        paidAt: new Date(),
+        amount: session.price,
+      });
+
+      // Mark code as used
+      matchedCode.isUsed = true;
+      matchedCode.usedBy = req.user._id;
+      matchedCode.usedAt = new Date();
+
+      await matchedCode.save();
+
+      return res.status(201).json({
+        message: "Order created successfully using direct code",
+        order,
+      });
+
+    } catch (error) {
+      console.error(
+        "Create order with direct code error:",
+        error
+      );
+
+      return res.status(500).json({
+        message: "Server error",
+      });
+    }
+  }
+);
+
+
+  
 
 module.exports = router;

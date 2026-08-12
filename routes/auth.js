@@ -415,9 +415,12 @@ router.post("/forgot-password", async (req, res) => {
     await user.save();
 
     // مؤقتًا للاختبار فقط
-    console.log(
-      `Password reset code for ${user.email}: ${code}`
-    );
+    await sendEmail( normalizedEmail, "Email Verification Code",
+       ` <h2>Verify your email</h2> 
+       <p>Your verification code is:</p> 
+       <h1>${code}</h1>
+       <p>This code expires in 5 minutes.</p> ` 
+      );
 
     res.status(200).json({
       message:
@@ -432,6 +435,8 @@ router.post("/forgot-password", async (req, res) => {
     });
   }
 });
+
+
 
 
 

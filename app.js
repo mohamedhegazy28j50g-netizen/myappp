@@ -1,6 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
+dotenv.config();
 const classRoutes = require("./routes/class");
  const authRoutes = require("./routes/auth");
 const lessonRoutes = require("./routes/lesson");
@@ -13,7 +14,7 @@ const User = require("./models/user");
 const session = require("express-session");
 const MongoStore = require("connect-mongo").default;
 
-dotenv.config();
+
 
 const app = express();
 
@@ -33,6 +34,8 @@ mongoose
     if (require.main === module) {
       app.listen(process.env.PORT || 5000, () => {
         console.log(`Server running on port ${process.env.PORT || 5000}`);
+        console.log (process.env.GMAIL_USER);
+        console.log (process.env.GMAIL_APP_PASSWORD);
       });
     }
   })

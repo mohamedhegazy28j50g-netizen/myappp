@@ -3,6 +3,7 @@ const bcrypt           = require("bcrypt");
 const crypto           = require("crypto");
 const User             = require("../models/user");
 const VerificationCode = require("../models/verificationcode");
+const sendEmail         = require("../services/mailer");
 
 
 const router = express.Router();
@@ -87,9 +88,12 @@ router.post("/register", async (req, res) => {
 
     // مؤقتًا هنطبع الكود في الـTerminal
     // لحد ما نربط Email Service
-    console.log(
-      `Verification code for ${normalizedEmail}: ${code}`
-    );
+    await sendEmail( normalizedEmail, "Email Verification Code",
+       ` <h2>Verify your email</h2> 
+       <p>Your verification code is:</p> 
+       <h1>${code}</h1>
+       <p>This code expires in 5 minutes.</p> ` 
+      );
 
     res.status(201).json({
       message:

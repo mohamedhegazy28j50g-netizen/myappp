@@ -89,11 +89,205 @@ function initI18n(translations, onChange) {
 }
 
 /* =====================================================
-   initAuthState — حالة تسجيل الدخول + القائمة الجانبية
+   initNotifications — جرس الإشعارات (بيتحط جوه initAuthState
+   لما نتأكد إن المستخدم مسجّل دخول، وبيتشال لو مش مسجّل)
+   ===================================================== */
+function initNotifications() {
+  const notifText = {
+    ar: { title: "الإشعارات", empty: "مفيش إشعارات لسه", error: "معرفناش نجيب الإشعارات" },
+    en: { title: "Notifications", empty: "No notifications yet", error: "Couldn't load notifications" },
+  };
+
+  const bellIcon =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>';
+
+  function getLang() {
+    return localStorage.getItem("lang") || "ar";
+  }
+
+  // بنبعت الاتنين (كوكي + Bearer token) عشان الملفات التانية في
+  // المشروع بتستخدم طريقتين مختلفتين لتوثيق الطلبات — الطريقة دي
+  // بتشتغل مع أي طريقة السيرفر شغّال بيها من غير ما نفترض
+  function authHeaders() {
+    const token = localStorage.getItem("token");
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  }
+
+  let bellBtn = null;
+  let panel = null;
+  let items = [];
+  let loaded = false;
+
+  function destroy() {
+    if (panel) { panel.remove(); panel = null; }
+    if (bellBtn) { bellBtn.remove(); bellBtn = null; }
+    items = [];
+    loaded = false;
+  }
+
+  function updateBadge(count) {
+    if (!bellBtn) return;
+    const badge = bellBtn.querySelector(".notif-badge");
+    if (!badge) return;
+    if (count > 0) {
+      badge.textContent = count > 9 ? "9+" : String(count);
+      badge.style.display = "flex";
+    } else {
+      badge.style.display = "none";
+    }
+  }
+
+  async function fetchUnreadCount() {
+    try {
+      const res = await fetch("/notifications/unread-count", {
+        credentials: "include",
+        headers: authHeaders(),
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      updateBadge(data.count || 0);
+    } catch (err) {
+      // العداد هيفضل زي ما هو لحد ما نجرب تاني
+    }
+  }
+
+  function itemTemplate(n) {
+    const lang = getLang();
+    const dateStr = n.createdAt
+      ? new Date(n.createdAt).toLocaleDateString(lang === "ar" ? "ar-EG" : "en-US", {
+          day: "numeric",
+          month: "short",
+        })
+      : "";
+    return `
+      <div class="notif-item${n.isRead ? "" : " unread"}">
+        <div class="notif-item-title">${n.title || ""}</div>
+        <div class="notif-item-msg">${n.message || ""}</div>
+        <div class="notif-item-date">${dateStr}</div>
+      </div>
+    `;
+  }
+
+  function renderList() {
+    if (!panel) return;
+    const list = panel.querySelector(".notif-list");
+    const t = notifText[getLang()];
+    if (!items.length) {
+      list.innerHTML = `<div class="notif-empty">${t.empty}</div>`;
+      return;
+    }
+    list.innerHTML = items.map(itemTemplate).join("");
+  }
+
+  async function markAllRead() {
+    try {
+      await fetch("/notifications/read-all", {
+        method: "PATCH",
+        credentials: "include",
+        headers: authHeaders(),
+      });
+    } catch (err) {
+      // هيتحاول تاني المرة الجاية يفتح فيها الجرس
+    }
+    items = items.map((n) => ({ ...n, isRead: true }));
+    renderList();
+    updateBadge(0);
+  }
+
+  async function loadNotifications() {
+    const list = panel.querySelector(".notif-list");
+    list.innerHTML = `<div class="notif-empty">…</div>`;
+    try {
+      const res = await fetch("/notifications", {
+        credentials: "include",
+        headers: authHeaders(),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      items = data.notifications || [];
+      loaded = true;
+      renderList();
+      if (items.some((n) => !n.isRead)) markAllRead();
+    } catch (err) {
+      list.innerHTML = `<div class="notif-empty">${notifText[getLang()].error}</div>`;
+    }
+  }
+
+  function handleOutsideClick(e) {
+    if (panel && !panel.contains(e.target) && e.target !== bellBtn && !bellBtn.contains(e.target)) {
+      close();
+    }
+  }
+
+  function handleEscape(e) {
+    if (e.key === "Escape") close();
+  }
+
+  function open() {
+    panel.classList.add("open");
+    if (!loaded) loadNotifications();
+    setTimeout(() => {
+      document.addEventListener("mousedown", handleOutsideClick);
+      document.addEventListener("keydown", handleEscape);
+    }, 0);
+  }
+
+  function close() {
+    panel.classList.remove("open");
+    document.removeEventListener("mousedown", handleOutsideClick);
+    document.removeEventListener("keydown", handleEscape);
+  }
+
+  function mount(insertBeforeEl) {
+    destroy();
+
+    bellBtn = document.createElement("button");
+    bellBtn.className = "icon-btn notif-bell";
+    bellBtn.id = "notifBellBtn";
+    bellBtn.type = "button";
+    bellBtn.title = notifText[getLang()].title;
+    bellBtn.innerHTML = `${bellIcon}<span class="notif-badge"></span>`;
+    insertBeforeEl.parentNode.insertBefore(bellBtn, insertBeforeEl);
+
+    panel = document.createElement("div");
+    panel.className = "notif-panel";
+    panel.id = "notifPanel";
+    panel.innerHTML = `
+      <div class="notif-panel-header">${notifText[getLang()].title}</div>
+      <div class="notif-list"></div>
+    `;
+    document.body.appendChild(panel);
+
+    bellBtn.addEventListener("click", () => {
+      if (panel.classList.contains("open")) close();
+      else open();
+    });
+
+    fetchUnreadCount();
+  }
+
+  // بيتحدّث لما اللغة تتغيّر (بعد ما html[lang] يتغيّر فعليًا،
+  // عشان نضمن ترتيب صحيح مع initI18n بغض النظر مين اتسجّل الأول)
+  const langObserver = new MutationObserver(() => {
+    if (bellBtn) bellBtn.title = notifText[getLang()].title;
+    if (panel) {
+      panel.querySelector(".notif-panel-header").textContent = notifText[getLang()].title;
+      renderList();
+    }
+  });
+  langObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["lang"] });
+
+  return { mount, destroy };
+}
+
+/* =====================================================
+   initAuthState — حالة تسجيل الدخول + القائمة الجانبية + الإشعارات
    ===================================================== */
 (function initAuthState() {
   const ctaBtn = document.querySelector(".nav-right .btn-cta");
   if (!ctaBtn) return;
+
+  const notifications = initNotifications();
 
   const drawerText = {
     ar: {
@@ -269,6 +463,8 @@ function initI18n(translations, onChange) {
     destroyDrawer();
     activeDrawer = buildDrawer(user);
     helloBtn.addEventListener("click", activeDrawer.openDrawer);
+
+    notifications.mount(helloBtn);
   }
 
   function mountLoginButton() {
@@ -279,6 +475,7 @@ function initI18n(translations, onChange) {
     activeButton.replaceWith(freshBtn);
     activeButton = freshBtn;
     destroyDrawer();
+    notifications.destroy();
   }
 
   const originalCtaMarkup = ctaBtn.outerHTML;

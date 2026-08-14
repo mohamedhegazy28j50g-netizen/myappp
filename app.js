@@ -9,6 +9,9 @@ const lessonRoutes = require("./routes/lesson");
 const sessionRoutes = require("./routes/session");
 const orderRoutes = require("./routes/order");
 const settingsRoutes = require("./routes/settings");
+
+const notificationRoutes = require("./routes/notification");
+const subscriptionRoutes = require("./routes/subscription");
 const authMiddleware = require("./middleware/authMiddleware");
 const roleMiddleware = require("./middleware/roleMiddleware");
 const directCodeRoutes = require("./routes/directcode");
@@ -76,6 +79,10 @@ mongoose
   app.use("/", settingsRoutes);
   app.use("/", directCodeRoutes);
   app.use("/", userRoutes);
+  app.use("/", notificationRoutes);
+  app.use("/", subscriptionRoutes);
+  
+  
   app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'home.html'));
   });

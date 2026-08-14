@@ -165,6 +165,145 @@
     color: var(--text); font-weight: 700; font-size: 13.5px; cursor: pointer;
   }
   .error-state .retry-btn:hover { border-color: var(--text-dim); }
+
+  /* ============ زرار الاشتراك في الكورس ============ */
+  .subscribe-btn {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 22px;
+    border-radius: 100px;
+    border: none;
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-family: inherit;
+    font-size: 14.5px;
+    font-weight: 700;
+    cursor: pointer;
+    flex-shrink: 0;
+    overflow: visible;
+    transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+
+  /* الزرار جنب المحتوى، متمركز رأسيًا مع الهيدر، مش تحت الوصف */
+  .class-header > .subscribe-btn {
+    margin-inline-start: auto;
+    align-self: center;
+  }
+
+  @media (max-width: 640px) {
+    .class-header > .subscribe-btn { margin-inline-start: 0; margin-top: 4px; }
+  }
+
+  .subscribe-btn:disabled { opacity: 0.6; cursor: default; }
+
+  .subscribe-btn.subscribed {
+    background: var(--free);
+    color: #fff;
+  }
+
+  .subscribe-btn.subscribed:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--live) 85%, var(--free));
+  }
+
+  .subscribe-btn .icon { width: 16px; height: 16px; flex-shrink: 0; }
+
+  .subscribe-btn.pop { animation: subscribePop 0.42s ease; }
+
+  @keyframes subscribePop {
+    0%   { transform: scale(1); }
+    35%  { transform: scale(1.16); }
+    60%  { transform: scale(0.94); }
+    100% { transform: scale(1); }
+  }
+
+  /* ============ تأثير الفرقعة عند الاشتراك ============ */
+  .subscribe-burst {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: visible;
+  }
+
+  .burst-dot {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    animation: burstOut 0.65s ease-out forwards;
+  }
+
+  @keyframes burstOut {
+    0%   { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    100% { transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(0); opacity: 0; }
+  }
+
+  /* ============ مودال تأكيد إلغاء الاشتراك ============ */
+  .confirm-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: color-mix(in srgb, var(--bg) 60%, transparent);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+
+  .confirm-overlay.open { opacity: 1; pointer-events: auto; }
+
+  .confirm-modal {
+    width: min(360px, 100%);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 26px 24px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
+    transform: scale(0.94) translateY(6px);
+    transition: transform 0.2s ease;
+  }
+
+  .confirm-overlay.open .confirm-modal { transform: scale(1) translateY(0); }
+
+  .confirm-modal .icon {
+    width: 46px; height: 46px;
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--live) 16%, transparent);
+    color: var(--live);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    margin-bottom: 14px;
+  }
+
+  .confirm-modal h3 { font-size: 16.5px; font-weight: 800; margin-bottom: 8px; }
+  .confirm-modal p { font-size: 13.5px; color: var(--text-dim); line-height: 1.8; margin-bottom: 20px; }
+
+  .confirm-actions { display: flex; gap: 10px; }
+
+  .confirm-actions button {
+    flex: 1;
+    padding: 11px;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1px solid var(--border);
+  }
+
+  .confirm-cancel { background: var(--surface); color: var(--text); }
+  .confirm-cancel:hover { border-color: var(--text-dim); }
+
+  .confirm-danger { background: var(--live); color: #fff; border-color: var(--live); }
+  .confirm-danger:hover { background: color-mix(in srgb, var(--live) 85%, black); }
 </style>
 </head>
 <body>
@@ -228,6 +367,19 @@
 
   </div>
 
+  <!-- مودال تأكيد إلغاء الاشتراك -->
+  <div class="confirm-overlay" id="unsubConfirmOverlay">
+    <div class="confirm-modal">
+      <div class="icon">🔕</div>
+      <h3 id="unsubTitle"></h3>
+      <p id="unsubBody"></p>
+      <div class="confirm-actions">
+        <button class="confirm-cancel" id="unsubCancelBtn"></button>
+        <button class="confirm-danger" id="unsubConfirmBtn"></button>
+      </div>
+    </div>
+  </div>
+
   <script src="shared/app.js"></script>
   <script>
     /* ============ ترجمة الصفحة دي ============ */
@@ -245,6 +397,13 @@
         lessonsErrorTitle: "معرفناش نجيب الدروس",
         errorBody: "تأكد إن السيرفر شغال، أو جرّب تاني.",
         retry: "إعادة المحاولة",
+        subscribeLabel: "اشترك في الكورس",
+        subscribedLabel: "مشترك ✓",
+        subscribeErrorLoggedOut: "سجّل دخول الأول عشان تشترك",
+        unsubTitle: "تلغي الاشتراك في الكورس؟",
+        unsubBody: "هتوقف تستقبل إشعارات عن الدروس والتحديثات الجديدة في هذا الكورس.",
+        unsubConfirm: "إلغاء الاشتراك",
+        unsubCancel: "تراجع",
       },
       en: {
         brandName: "Teacher Name", navCta: "Log In",
@@ -259,6 +418,13 @@
         lessonsErrorTitle: "Couldn't load the lessons",
         errorBody: "Make sure the server is running, or try again.",
         retry: "Retry",
+        subscribeLabel: "Subscribe to course",
+        subscribedLabel: "Subscribed ✓",
+        subscribeErrorLoggedOut: "Log in first to subscribe",
+        unsubTitle: "Unsubscribe from this course?",
+        unsubBody: "You'll stop receiving notifications about new lessons and updates for this course.",
+        unsubConfirm: "Unsubscribe",
+        unsubCancel: "Cancel",
       },
     };
 
@@ -281,6 +447,152 @@
     function authHeaders() {
       const token = localStorage.getItem("token");
       return token ? { Authorization: `Bearer ${token}` } : {};
+    }
+
+    /* ============ اشتراك في الكورس ============ */
+    const subscribeIcons = {
+      plus: '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>',
+      check: '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+    };
+
+    let isSubscribed = false;
+    let subscriptionKnown = false;
+
+    function renderSubscribeBtn() {
+      const btn = document.getElementById("subscribeBtn");
+      if (!btn) return;
+      const t = translations[getLang()];
+      btn.disabled = false;
+      btn.classList.toggle("subscribed", isSubscribed);
+      btn.innerHTML = isSubscribed
+        ? `${subscribeIcons.check}<span>${t.subscribedLabel}</span>`
+        : `${subscribeIcons.plus}<span>${t.subscribeLabel}</span>`;
+    }
+
+    async function loadSubscriptionStatus() {
+      if (!classId) return;
+      try {
+        const res = await fetch(`/subscriptions/check/${classId}`, { headers: authHeaders() });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        isSubscribed = !!data.subscribed;
+        subscriptionKnown = true;
+        renderSubscribeBtn();
+      } catch (err) {
+        console.error("loadSubscriptionStatus error:", err);
+        // لو فشل الطلب (مثلاً 401 لمستخدم مش مسجّل دخول) سيب الزرار
+        // في وضعه الافتراضي "اشترك" — هيتصرف صح لما يدوس عليه
+      }
+    }
+
+    // ============ تأثير الفرقعة عند الاشتراك (زي زرار يوتيوب) ============
+    function burstEffect(btn) {
+      const rect = btn.getBoundingClientRect();
+      const cx = rect.width / 2;
+      const cy = rect.height / 2;
+      const wrap = document.createElement("span");
+      wrap.className = "subscribe-burst";
+
+      const count = 14;
+      for (let i = 0; i < count; i++) {
+        const angle = (Math.PI * 2 * i) / count + Math.random() * 0.35;
+        const dist = 24 + Math.random() * 20;
+        const dot = document.createElement("span");
+        dot.className = "burst-dot";
+        dot.style.left = `${cx}px`;
+        dot.style.top = `${cy}px`;
+        dot.style.setProperty("--tx", `${Math.cos(angle) * dist}px`);
+        dot.style.setProperty("--ty", `${Math.sin(angle) * dist}px`);
+        dot.style.background = i % 2 === 0 ? "var(--free)" : "var(--accent)";
+        wrap.appendChild(dot);
+      }
+
+      btn.appendChild(wrap);
+      setTimeout(() => wrap.remove(), 700);
+    }
+
+    // ============ مودال تأكيد إلغاء الاشتراك ============
+    function openUnsubConfirm() {
+      document.getElementById("unsubConfirmOverlay").classList.add("open");
+    }
+
+    function closeUnsubConfirm() {
+      document.getElementById("unsubConfirmOverlay").classList.remove("open");
+    }
+
+    async function toggleSubscribe() {
+      const btn = document.getElementById("subscribeBtn");
+      if (!classId || !btn || btn.disabled) return;
+
+      // لو مشترك بالفعل، اسأله الأول قبل ما تشيل الاشتراك
+      if (isSubscribed) {
+        openUnsubConfirm();
+        return;
+      }
+
+      await doSubscribe();
+    }
+
+    async function doSubscribe() {
+      const btn = document.getElementById("subscribeBtn");
+      if (!btn) return;
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`/subscriptions/${classId}`, {
+          method: "POST",
+          headers: authHeaders(),
+        });
+
+        if (res.status === 401) {
+          alert(translations[getLang()].subscribeErrorLoggedOut);
+          btn.disabled = false;
+          return;
+        }
+
+        // 409 (مشترك بالفعل) بنتعامل معاه كنجاح عشان الحالة تتزبط
+        if (!res.ok && res.status !== 409) throw new Error(`HTTP ${res.status}`);
+
+        isSubscribed = true;
+        renderSubscribeBtn();
+
+        const freshBtn = document.getElementById("subscribeBtn");
+        burstEffect(freshBtn);
+        freshBtn.classList.add("pop");
+        setTimeout(() => freshBtn.classList.remove("pop"), 420);
+      } catch (err) {
+        console.error("subscribe error:", err);
+        btn.disabled = false;
+      }
+    }
+
+    async function doUnsubscribe() {
+      closeUnsubConfirm();
+      const btn = document.getElementById("subscribeBtn");
+      if (!btn) return;
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`/subscriptions/${classId}`, {
+          method: "DELETE",
+          headers: authHeaders(),
+        });
+
+        if (res.status === 401) {
+          alert(translations[getLang()].subscribeErrorLoggedOut);
+          btn.disabled = false;
+          return;
+        }
+
+        // 404 (مش مشترك أساسًا) بنتعامل معاه كنجاح عشان الحالة تتزبط
+        if (!res.ok && res.status !== 404) throw new Error(`HTTP ${res.status}`);
+
+        isSubscribed = false;
+        renderSubscribeBtn();
+      } catch (err) {
+        console.error("unsubscribe error:", err);
+        btn.disabled = false;
+      }
     }
 
     /* ============ بيانات الكورس — من الباك اند فقط، من غير أي fallback وهمي ============ */
@@ -329,7 +641,18 @@
             <span id="metaLessonsCount">📖 —</span>
           </div>
         </div>
+        <button class="subscribe-btn" id="subscribeBtn" disabled>
+          ${subscribeIcons.plus}<span>${translations[getLang()].subscribeLabel}</span>
+        </button>
       `;
+
+      document.getElementById("subscribeBtn").addEventListener("click", toggleSubscribe);
+
+      if (subscriptionKnown) {
+        renderSubscribeBtn();
+      } else {
+        loadSubscriptionStatus();
+      }
 
       // لو الدروس اتحملت قبل بيانات الكورس، حدّث العداد فورًا
       if (allLessons.length) updateLessonsMeta();
@@ -443,9 +766,33 @@
       renderLessons(currentQuery);
     });
 
+    /* ============ مودال تأكيد إلغاء الاشتراك — نصوصه وأزراره ============ */
+    function renderUnsubModalText() {
+      const t = translations[getLang()];
+      document.getElementById("unsubTitle").textContent = t.unsubTitle;
+      document.getElementById("unsubBody").textContent = t.unsubBody;
+      document.getElementById("unsubCancelBtn").textContent = t.unsubCancel;
+      document.getElementById("unsubConfirmBtn").textContent = t.unsubConfirm;
+    }
+
+    document.getElementById("unsubCancelBtn").addEventListener("click", closeUnsubConfirm);
+    document.getElementById("unsubConfirmBtn").addEventListener("click", doUnsubscribe);
+
+    document.getElementById("unsubConfirmOverlay").addEventListener("click", (e) => {
+      if (e.target.id === "unsubConfirmOverlay") closeUnsubConfirm();
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeUnsubConfirm();
+    });
+
+    renderUnsubModalText();
+
     i18n = initI18n(translations, () => {
       renderLessonsCount();
       renderLessons(currentQuery);
+      if (subscriptionKnown) renderSubscribeBtn();
+      renderUnsubModalText();
     });
 
     skeletonRows();

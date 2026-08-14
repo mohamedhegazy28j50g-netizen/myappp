@@ -3,6 +3,8 @@ const mongoose = require("mongoose");
 
 const Session = require("../models/session");
 const Lesson = require("../models/lesson");
+const Subscription = require("../models/subscription");
+const Notification = require("../models/notification");
 
 const authMiddleware = require("../middleware/authMiddleware");
 const roleMiddleware = require("../middleware/roleMiddleware");
@@ -117,7 +119,34 @@ router.post(
         scheduledAt: type === "live" ? scheduledAt : undefined,
         meetingUrl: type === "live" ? meetingUrl : undefined,
       });
+      
+      // Create notifications for all subscribed users of the course
+      
+      
+      try {
+       const subscriptions = await Subscription.find({
+       classId: lesson.classId,
+       }).select("userId");
 
+       const notifications = subscriptions.map((subscription) => ({
+       userId: subscription.userId,
+       classId: lesson.classId,
+       sessionId: session._id,
+       title: "Session جديدة",
+       message: `تم إضافة Session جديدة: ${session.title}`,
+       }));
+
+        if (notifications.length > 0) {
+        await Notification.insertMany(notifications);
+       }
+       } catch (notificationError) {
+        console.error(
+       "Create notifications error:",
+       notificationError
+        );
+       }
+
+/////////////////////////// continue without waiting for notifications to finish//
       res.status(201).json({
         message: "Session created successfully",
         session,
@@ -130,6 +159,7 @@ router.post(
       });
     }
   }
+  
 );
 
 // =====================================================

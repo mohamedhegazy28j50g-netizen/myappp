@@ -255,6 +255,30 @@
     font-size: 13.5px; color: var(--text-dim); line-height: 1.9;
   }
 
+  /* ============ ويدجت امتحان الحصة ============ */
+  .quiz-widget-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 12px 14px; border: 1px solid var(--border); border-radius: 12px;
+    background: var(--surface-2); flex-wrap: wrap;
+  }
+  .quiz-widget-info { flex: 1; min-width: 180px; }
+  .quiz-widget-info strong { display: block; font-size: 13.5px; font-weight: 700; margin-bottom: 2px; }
+  .quiz-widget-info span { font-size: 12px; color: var(--text-dim); }
+
+  .quiz-widget-badge {
+    font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 100px;
+    background: var(--surface); border: 1px solid var(--border); color: var(--text-dim); flex-shrink: 0;
+  }
+  .quiz-widget-badge.pass { color: var(--free); border-color: color-mix(in srgb, var(--free) 40%, var(--border)); }
+  .quiz-widget-badge.fail { color: var(--live); border-color: color-mix(in srgb, var(--live) 40%, var(--border)); }
+
+  .quiz-review-box { margin-top: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .quiz-review-q { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+  .quiz-review-q .qr-text { font-size: 13.5px; margin-bottom: 8px; }
+  .quiz-review-q .qr-choice { font-size: 12.5px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 6px; }
+  .quiz-review-q .qr-choice.correct { border-color: var(--free); color: var(--free); }
+  .quiz-review-q .qr-choice.wrong-selected { border-color: var(--live); color: var(--live); }
+
   /* ============ مودال الشراء (تحويل يدوي) ============ */
   .purchase-overlay {
     position: fixed;
@@ -499,6 +523,11 @@
         <div class="attachments" id="attachmentsBox" style="display:none;">
           <h3 data-i18n="attachmentsTitle">مرفقات الحصة</h3>
           <div id="attachmentsList"></div>
+        </div>
+
+        <div class="attachments" id="quizBox" style="display:none; margin-top:16px;">
+          <h3>امتحان الحصة</h3>
+          <div id="quizWidgetArea"></div>
         </div>
       </div>
     </div>
@@ -836,6 +865,7 @@
         </div>`;
       document.getElementById("playlistCount").textContent = "";
       document.getElementById("attachmentsBox").style.display = "none";
+      document.getElementById("quizBox").style.display = "none";
     }
 
     function paintFromSessionData() {
@@ -857,12 +887,14 @@
         renderLockedPlayer();
         renderLockedPlaylist();
         document.getElementById("attachmentsBox").style.display = "none";
+        document.getElementById("quizBox").style.display = "none";
         return;
       }
 
       document.getElementById("playerControls").style.display = "flex";
       renderPlaylist();
       renderAttachments();
+      loadQuizWidget();
       selectVideo(activeVideoIndex);
     }
 
@@ -1009,6 +1041,126 @@
       if (!html) { box.style.display = "none"; return; }
       box.style.display = "flex";
       list.innerHTML = html;
+    }
+
+    /* ============ ويدجت امتحان الحصة (بيظهر بس مع hasAccess:true) ============ */
+    function esc(str) {
+      return String(str ?? "").replace(/[&<>"']/g, (c) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+      }[c]));
+    }
+
+    async function loadQuizWidget() {
+      const box = document.getElementById("quizBox");
+      const area = document.getElementById("quizWidgetArea");
+
+      try {
+        const res = await fetch(`/quizzes/session/${sessionId}/my-status`, {
+          headers: authHeaders(),
+          credentials: "include",
+        });
+        if (!res.ok) { box.style.display = "none"; return; }
+
+        const data = await res.json();
+        if (!data.quiz) { box.style.display = "none"; return; }
+
+        box.style.display = "flex";
+        area.innerHTML = quizWidgetTemplate(data);
+      } catch (err) {
+        console.error("loadQuizWidget error:", err);
+        box.style.display = "none";
+      }
+    }
+
+    function quizWidgetTemplate(data) {
+      const q = data.quiz;
+      const typeLabel = q.type === "objective" ? "اختياري" : "مقالي";
+
+      let statusBadge = `<span class="quiz-widget-badge">لسه ما دخلتش</span>`;
+      let subLine = `مدة الامتحان: ${q.durationMinutes} دقيقة`;
+      let actionBtns = `<button class="a-btn" onclick="location.href='quiz.html?id=${q._id}'">ابدأ الامتحان</button>`;
+
+      if (data.hasEntered && data.lastAttempt) {
+        const la = data.lastAttempt;
+
+        if (la.status === "in_progress") {
+          statusBadge = `<span class="quiz-widget-badge">شغال دلوقتي</span>`;
+          actionBtns = `<button class="a-btn" onclick="location.href='quiz.html?id=${q._id}'">استكمال المحاولة</button>`;
+        } else if (la.status === "pending_review") {
+          statusBadge = `<span class="quiz-widget-badge">بانتظار التصحيح</span>`;
+          subLine = "المدرس لسه بيصحح إجاباتك، الدرجة هتظهر بعد ما يخلص";
+          actionBtns = "";
+        } else {
+          // objective: submitted | essay: graded
+          const passed = q.type === "objective" && la.percentage >= q.passPercentage;
+          statusBadge = q.type === "essay"
+            ? `<span class="quiz-widget-badge pass">${la.percentage}%</span>`
+            : `<span class="quiz-widget-badge ${passed ? "pass" : "fail"}">${la.percentage}%</span>`;
+
+          subLine = q.type === "objective"
+            ? `محاولات: ${data.attemptsUsed}/${q.maxAttempts} · فاضل: ${data.attemptsRemaining}`
+            : `الدرجة: ${la.score}/${la.maxScore}`;
+
+          actionBtns = "";
+          if (data.canReview) {
+            actionBtns += `<button class="a-btn" onclick="openQuizReview('${la.attemptId}')">شوف إجاباتك</button>`;
+          }
+          if (data.canRetry) {
+            actionBtns += ` <button class="a-btn" onclick="location.href='quiz.html?id=${q._id}'">إعادة المحاولة</button>`;
+          }
+        }
+      }
+
+      return `
+        <div class="quiz-widget-row">
+          <div class="quiz-widget-info">
+            <strong>${esc(q.title)}</strong>
+            <span>${typeLabel} · ${subLine}</span>
+          </div>
+          ${statusBadge}
+          ${actionBtns}
+        </div>
+        <div id="quizReviewArea"></div>
+      `;
+    }
+
+    /* ============ عرض إجابات الطالب (صح/غلط) لمحاولة اجتازها ============ */
+    async function openQuizReview(attemptId) {
+      const area = document.getElementById("quizReviewArea");
+      area.innerHTML = `<div class="quiz-review-box"><p style="font-size:12.5px;color:var(--text-dim);">بيتم التحميل...</p></div>`;
+
+      try {
+        const res = await fetch(`/quizzes/attempts/${attemptId}/result`, {
+          headers: authHeaders(),
+          credentials: "include",
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        if (!data.details) {
+          area.innerHTML = `<div class="quiz-review-box"><p style="font-size:12.5px;color:var(--text-dim);">مفيش تفاصيل متاحة دلوقتي.</p></div>`;
+          return;
+        }
+
+        area.innerHTML = `<div class="quiz-review-box">${data.details.map(quizReviewQuestionTemplate).join("")}</div>`;
+      } catch (err) {
+        area.innerHTML = `<div class="quiz-review-box"><p style="font-size:12.5px;color:#ff8080;">معرفناش نجيب إجاباتك: ${esc(err.message)}</p></div>`;
+      }
+    }
+
+    function quizReviewQuestionTemplate(d) {
+      const choicesHtml = (d.choices || []).map((c) => {
+        const isSelected = d.selectedChoiceId && String(d.selectedChoiceId._id || d.selectedChoiceId) === String(c._id);
+        const cls = c.isCorrect ? "correct" : (isSelected ? "wrong-selected" : "");
+        return `<div class="qr-choice ${cls}">${esc(c.text || "")} ${c.isCorrect ? "✓" : (isSelected ? "✗ (اخترته)" : "")}</div>`;
+      }).join("");
+
+      return `
+        <div class="quiz-review-q">
+          <div class="qr-text">${esc(d.question.text)}</div>
+          ${choicesHtml}
+        </div>
+      `;
     }
 
     /* ============ تصغير/إظهار قايمة الفيديوهات ============ */

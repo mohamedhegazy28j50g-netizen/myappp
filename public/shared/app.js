@@ -42,7 +42,7 @@
   });
 })();
 
-function initI18n(translations, onChange) {
+ function initI18n(translations, onChange) {
   const html = document.documentElement;
   const langToggle = document.getElementById("langToggle");
   let currentLang = localStorage.getItem("lang") || "ar";

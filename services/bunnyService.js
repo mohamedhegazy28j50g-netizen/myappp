@@ -1,4 +1,12 @@
 const crypto = require("crypto");
+const {
+  S3Client,
+  PutObjectCommand,
+} = require("@aws-sdk/client-s3");
+
+const {
+  getSignedUrl,
+} = require("@aws-sdk/s3-request-presigner");
 
 
 
@@ -113,8 +121,53 @@ async function deleteBunnyVideo(videoId) {
   }
 }
 
+async function uploadBunnyImage(fileName, fileBuffer, contentType) {
+  const storageZone = process.env.BUNNY_STORAGE_ZONE;
+  const accessKey = process.env.BUNNY_STORAGE_ACCESS_KEY;
+
+  if (!storageZone || !accessKey) {
+    throw new Error(
+      "BUNNY_STORAGE_ZONE and BUNNY_STORAGE_ACCESS_KEY must be set"
+    );
+  }
+
+  const cleanName = fileName
+    .replace(/\\/g, "/")
+    .split("/")
+    .pop()
+    .replace(/[^a-zA-Z0-9._-]/g, "-");
+
+  const objectKey =
+    `images/${Date.now()}-${crypto.randomUUID()}-${cleanName}`;
+
+  const uploadUrl =
+    `https://storage.bunnycdn.com/${storageZone}/${objectKey}`;
+
+  const response = await fetch(uploadUrl, {
+    method: "PUT",
+    headers: {
+      AccessKey: accessKey,
+      "Content-Type": contentType || "application/octet-stream",
+    },
+    body: fileBuffer,
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(
+      `Failed to upload image to Bunny: ${response.status} ${errorText}`
+    );
+  }
+
+  return {
+    objectKey,
+    publicUrl: `https://${process.env.BUNNY_CDN_URL}/${objectKey}`,
+  };
+}
+
 module.exports = {
   generateBunnySignedEmbedUrl,
   createBunnyUploadCredentials,
+  uploadBunnyImage,
   deleteBunnyVideo,
 };

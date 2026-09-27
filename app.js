@@ -68,6 +68,16 @@ mongoose
     },
   })
 );
+app.get('/dashboard.html', authMiddleware,
+    roleMiddleware(["teacher"]), (req, res) => {
+  res.sendFile(path.join(__dirname, 'private', 'dashboard.html'));});
+
+  app.use(
+  "/dash-assets",
+  authMiddleware,
+  roleMiddleware(["teacher"]),
+  express.static(path.join(__dirname, "private"))
+);
 
  
   app.use("/classes", classRoutes);
@@ -81,13 +91,10 @@ mongoose
   app.use("/", userRoutes);
   app.use("/", notificationRoutes);
   app.use("/", subscriptionRoutes);
-  
+
   
   app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'home.html'));
   });
-  app.get('/dashboard.html', authMiddleware,
-    roleMiddleware(["teacher"]), (req, res) => {
-  res.sendFile(path.join(__dirname, 'private', 'dashboard.html'));});
-
+  
   module.exports = app;

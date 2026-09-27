@@ -8,7 +8,18 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="shared/style.css">
 <style>
-  .wrap { max-width: 900px; }
+ 
+  .brand-logo img.brand-logo-img {
+    height: 62px;
+    width: 62px;
+    object-fit: contain;
+    display: block;
+    border-radius: 50%;
+    margin-block: -14px;
+    position: relative;
+    z-index: 2;
+  }
+ .wrap { max-width: 900px; }
 
   .doodle-c1 { width: 70px; height: 70px; top: 16%; left: 7%; }
   .doodle-c2 { width: 100px; height: 100px; bottom: 8%; right: 6%; }
@@ -107,7 +118,7 @@
 
   <nav>
     <div class="brand">
-      <a href="home.html" class="brand-logo"><span class="logo-fy">fy</span><span class="logo-edu">Edu</span></a>
+      <a href="home.html" class="brand-logo"><img src="images/logo.jpg" alt="IMSS" class="brand-logo-img"></a>
     </div>
 
     <div class="nav-links">

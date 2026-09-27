@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>الأستاذ / منصة الدروس</title>
+<title>IMSs</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="shared/style.css">
@@ -15,6 +15,20 @@
   }
 
   .nav-links a:hover { color: var(--text); }
+
+  /* selector matches .brand-logo img (from shared style.css) in specificity
+     terms (class + type) but adds .brand-logo-img on top, so this always
+     wins regardless of stylesheet load order */
+  .brand-logo img.brand-logo-img {
+    height: 62px;
+    width: 62px;
+    object-fit: contain;
+    display: block;
+    border-radius: 50%;
+    margin-block: -14px;
+    position: relative;
+    z-index: 2;
+  }
 
   /* ============ HERO ============ */
   .hero {
@@ -218,6 +232,13 @@
     font-size: 26px;
   }
 
+  .teacher-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 20px;
+  }
+
   .float-badge {
     position: absolute;
     background: var(--surface);
@@ -264,7 +285,7 @@
 
   <nav>
     <div class="brand">
-      <a href="home.html" class="brand-logo"><span class="logo-fy">fy</span><span class="logo-edu">Edu</span></a>
+      <a href="home.html" class="brand-logo"><img src="images/logo.jpg" alt="IMSS" class="brand-logo-img"></a>
     </div>
 
     <div class="nav-links">
@@ -312,44 +333,35 @@
 
     <div class="hero-grid">
       <div>
-        <div class="eyebrow">
-          <span class="eyebrow-dot"></span>
-          <span data-i18n="heroEyebrow">مدرّس احياء · المرحلة الثانوية</span>
-        </div>
+        
 
         <h1>
           <span data-i18n="heroName">محمد حجازي</span> —
           <span data-i18n="heroSubjectHighlight">البايولوجي بطريقة مختلفة</span>
         </h1>
 
-        <p class="lede" data-i18n="heroLede">
-          محاضرات مسجّلة وحصص لايف، مقسّمة بترتيب واضح لكل صف دراسي،
-          مع ملخصات وواجبات بعد كل حصة عشان تتابع بجد.
-        </p>
+        <p class="lede" data-i18n="heroLede">Senior HSE Consultant & Corporate Trainer — خبير واستشاري السلامة والصحة المهنية | تأهيل الكوادر والمنشآت لتطبيق المعايير العالمية ميدانياً (خبرة +18 عام)</p>
 
         <div class="hero-actions">
           <a href="classes.html" class="btn-primary" data-i18n="heroCtaPrimary">استعرض الكورسات</a>
-          <a href="about.html" class="btn-secondary" data-i18n="heroCtaSecondary">تعرّف على الأستاذ</a>
+          <a href="about.html" class="btn-secondary" data-i18n="heroCtaSecondary">تعرف على المهندس</a>
         </div>
 
         <div class="hero-stats">
-          <div><strong>+1200</strong><span data-i18n="statStudents">طالب مشترك</span></div>
-          <div><strong>4.9</strong><span data-i18n="statRating">تقييم الطلاب</span></div>
-          <div><strong>8</strong><span data-i18n="statYears">سنين خبرة</span></div>
+          <div><strong>+3500</strong><span data-i18n="statStudents">متدرب مشترك</span></div>
+          <div><strong>4.9</strong><span data-i18n="statRating">تقييم المتدربين</span></div>
+          <div><strong>18</strong><span data-i18n="statYears">سنين خبرة</span></div>
         </div>
       </div>
 
       <div class="hero-visual">
-        <div class="float-badge top"><span data-i18n="badgeCertified">أنت تقدر💪</span></div>
-
+        
         <div class="photo-frame">
-          <div class="avatar-circle"></div>
-          <span data-i18n="photoPlaceholder">مكان صورة الأستاذ الشخصية</span>
+          <img src="images/teacher.jpg" alt="م/ ياسر عبدالستار" class="teacher-photo">
         </div>
 
-        <div class="float-badge bottom">
-          <span class="badge-dot"></span>
-          <span data-i18n="badgeLive">فيه حصة لايف الأسبوع ده</span>
+        
+          
         </div>
       </div>
     </div>
@@ -366,17 +378,17 @@
         navContact: "تواصل",
         navCta: "سجّل دخول",
         heroEyebrow: "مدرّس احياء · المرحلة الثانوية",
-        heroName: "محمد حجازي",
-        heroSubjectHighlight: "البايولوجي بطريقة مختلفة",
-        heroLede: "محاضرات مسجّلة وحصص لايف، مقسّمة بترتيب واضح لكل صف دراسي، مع ملخصات وواجبات بعد كل حصة عشان تتابع بجد.",
+        heroName: "م/ ياسر عبدالستار",
+        heroSubjectHighlight: "تعلمك مسؤوليتي و نجاحك نجاحي ",
+        heroLede: "Senior HSE Consultant & Corporate Trainer — خبير واستشاري السلامة والصحة المهنية | تأهيل الكوادر والمنشآت لتطبيق المعايير العالمية ميدانياً (خبرة +18 عام)",
         heroCtaPrimary: "استعرض الكورسات",
-        heroCtaSecondary: "تعرّف على الأستاذ",
-        statStudents: "طالب مشترك",
-        statRating: "تقييم الطلاب",
+        heroCtaSecondary: "تعرّف على المهندس",
+        statStudents: "متدرب مشترك",
+        statRating: "تقييم المتدربين",
         statYears: "سنين خبرة",
-        badgeCertified: "أنت تقدر💪",
-        photoPlaceholder: "مكان صورة الأستاذ الشخصية",
-        badgeLive: "فيه حصة لايف الأسبوع ده",
+        badgeCertified: "",
+        photoPlaceholder: "مكان ",
+        badgeLive: " حصة لايف الأسبوع ده",
       },
       en: {
         brandName: "Teacher Name",
@@ -388,7 +400,7 @@
         heroEyebrow: "biology Teacher · High School",
         heroName: "mohamed hegazy",
         heroSubjectHighlight: "biology, explained the way it should be",
-        heroLede: "Recorded lectures and live sessions, organized clearly by grade, with summaries and homework after every class.",
+        heroLede: "",
         heroCtaPrimary: "Browse Courses",
         heroCtaSecondary: "About the Teacher",
         statStudents: "Students",

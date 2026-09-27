@@ -12,6 +12,20 @@
   <link rel="stylesheet" href="shared/style.css">
 
   <style>
+    /* selector matches .brand-logo img (from shared style.css) in specificity
+       terms (class + type) but adds .brand-logo-img on top, so this always
+       wins regardless of stylesheet load order */
+    .brand-logo img.brand-logo-img {
+      height: 62px;
+      width: 62px;
+      object-fit: contain;
+      display: block;
+      border-radius: 50%;
+      margin-block: -14px;
+      position: relative;
+      z-index: 2;
+    }
+
     .auth-page {
       min-height: calc(100vh - 80px);
       display: flex;
@@ -255,8 +269,7 @@
 
   <nav>
     <div class="brand">
-      <span class="brand-mark">أ</span>
-      <span>منصة الأستاذ</span>
+      <a href="home.html" class="brand-logo"><img src="images/logo.jpg" alt="IMSS" class="brand-logo-img"></a>
     </div>
 
     <div class="nav-links">
@@ -432,6 +445,7 @@
     </div>
   </main>
 
+  <script src="shared/app.js"></script>
   <script src="auth.js"></script>
 </body>
 </html>

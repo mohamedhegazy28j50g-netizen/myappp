@@ -10,6 +10,7 @@ const authMiddleware = require("../middleware/authMiddleware");
 const roleMiddleware = require("../middleware/roleMiddleware");
 const sessionAccessStatus = require("../middleware/sessionAccessStatus");
 const { generateBunnySignedEmbedUrl, createBunnyUploadCredentials, deleteBunnyVideo } = require("../services/bunnyService");
+const { uploadImageToCloudinary, uploadPdfToCloudinary } = require("../services/claudinary");
 
 const router = express.Router();
 
@@ -639,5 +640,81 @@ router.post(
     }
   }
 );
+
+
+/////image 
+const multer = require("multer");
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10 MB
+  },
+});
+
+router.post("/images/upload", upload.single("file"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        message: "الصورة مطلوبة",
+      });
+    }
+
+    if (!req.file.mimetype.startsWith("image/")) {
+      return res.status(400).json({
+        message: "الملف لازم يكون صورة",
+      });
+    }
+
+    const result = await uploadImageToCloudinary(req.file.buffer);
+
+    res.json({
+      success: true,
+      publicUrl: result.publicUrl,
+      publicId: result.publicId,
+    });
+  } catch (err) {
+    console.error("Image upload error:", err);
+
+    res.status(500).json({
+      message: err.message || "فشل رفع الصورة",
+    });
+  }
+});
+
+/////pdf
+
+router.post("/files/upload", upload.single("file"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        message: "الملف مطلوب",
+      });
+    }
+
+    if (req.file.mimetype !== "application/pdf") {
+      return res.status(400).json({
+        message: "الملف لازم يكون PDF",
+      });
+    }
+
+    const result = await uploadPdfToCloudinary(
+      req.file.buffer,
+      req.file.originalname
+    );
+
+    res.json({
+      success: true,
+      publicUrl: result.publicUrl,
+      publicId: result.publicId,
+    });
+  } catch (err) {
+    console.error("PDF upload error:", err);
+
+    res.status(500).json({
+      message: err.message || "فشل رفع الملف",
+    });
+  }
+});
 
 module.exports = router;

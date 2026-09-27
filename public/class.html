@@ -9,6 +9,17 @@
 <link rel="stylesheet" href="shared/style.css">
 <style>
   /* ============ خاص بالصفحة دي بس ============ */
+  .brand-logo img.brand-logo-img {
+    height: 62px;
+    width: 62px;
+    object-fit: contain;
+    display: block;
+    border-radius: 50%;
+    margin-block: -14px;
+    position: relative;
+    z-index: 2;
+  }
+  
   .wrap { max-width: 980px; }
 
   /* ============ CLASS HEADER ============ */
@@ -312,7 +323,7 @@
 
   <nav>
     <div class="brand">
-      <a href="home.html" class="brand-logo"><span class="logo-fy">fy</span><span class="logo-edu">Edu</span></a>
+      <a href="home.html" class="brand-logo"><img src="images/logo.jpg" alt="IMSS" class="brand-logo-img"></a>
     </div>
     <div class="nav-links">
       <a href="home.html" data-i18n="navHome">الرئيسية</a>
